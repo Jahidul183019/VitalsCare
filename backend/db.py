@@ -29,7 +29,12 @@ def get_conn():
 def init_db() -> None:
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     conn = get_conn()
-    cur = conn.cursor()
+    # Use cursor factory for Postgres to return dict-like rows if available
+    if _USE_POSTGRES:
+        import psycopg2.extras
+        cur = conn.cursor()
+    else:
+        cur = conn.cursor()
     if _USE_POSTGRES:
         cur.execute(
             '''
@@ -74,69 +79,115 @@ def init_db() -> None:
 
 def create_session(token: str, user_id: int, ttl_seconds: int = 7 * 24 * 3600) -> None:
     conn = get_conn()
-    cur = conn.cursor()
-    expires = int(time.time()) + int(ttl_seconds)
-    cur.execute('INSERT OR REPLACE INTO sessions(token, user_id, expires_at) VALUES (?,?,?)', (token, user_id, expires))
+    if _USE_POSTGRES:
+        import psycopg2.extras
+        cur = conn.cursor()
+        expires = int(time.time()) + int(ttl_seconds)
+        cur.execute(
+            'INSERT INTO sessions(token, user_id, expires_at) VALUES (%s, %s, %s) ON CONFLICT (token) DO UPDATE SET user_id = EXCLUDED.user_id, expires_at = EXCLUDED.expires_at',
+            (token, user_id, expires)
+        )
+    else:
+        cur = conn.cursor()
+        expires = int(time.time()) + int(ttl_seconds)
+        cur.execute('INSERT OR REPLACE INTO sessions(token, user_id, expires_at) VALUES (?,?,?)', (token, user_id, expires))
     conn.commit()
     conn.close()
 
 
 def get_user_by_username(username: str):
     conn = get_conn()
-    cur = conn.cursor()
-    cur.execute('SELECT * FROM users WHERE username = ?', (username,))
-    row = cur.fetchone()
+    if _USE_POSTGRES:
+        import psycopg2.extras
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute('SELECT * FROM users WHERE username = %s', (username,))
+        row = cur.fetchone()
+    else:
+        cur = conn.cursor()
+        cur.execute('SELECT * FROM users WHERE username = ?', (username,))
+        row = cur.fetchone()
     conn.close()
     return dict(row) if row else None
 
 
 def create_user(username: str, password_hash: str, name: str | None = None) -> int:
     conn = get_conn()
-    cur = conn.cursor()
-    cur.execute('INSERT INTO users(username, password_hash, name) VALUES (?,?,?)', (username, password_hash, name))
-    conn.commit()
-    uid = cur.lastrowid
+    if _USE_POSTGRES:
+        import psycopg2.extras
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute('INSERT INTO users(username, password_hash, name) VALUES (%s, %s, %s) RETURNING id', (username, password_hash, name))
+        uid = cur.fetchone()['id']
+        conn.commit()
+    else:
+        cur = conn.cursor()
+        cur.execute('INSERT INTO users(username, password_hash, name) VALUES (?,?,?)', (username, password_hash, name))
+        conn.commit()
+        uid = cur.lastrowid
     conn.close()
     return uid
 
 
 def get_user_by_id(user_id: int):
     conn = get_conn()
-    cur = conn.cursor()
-    cur.execute('SELECT * FROM users WHERE id = ?', (user_id,))
-    row = cur.fetchone()
+    if _USE_POSTGRES:
+        import psycopg2.extras
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute('SELECT * FROM users WHERE id = %s', (user_id,))
+        row = cur.fetchone()
+    else:
+        cur = conn.cursor()
+        cur.execute('SELECT * FROM users WHERE id = ?', (user_id,))
+        row = cur.fetchone()
     conn.close()
     return dict(row) if row else None
 
 
 def update_user_name(user_id: int, name: str) -> None:
     conn = get_conn()
-    cur = conn.cursor()
-    cur.execute('UPDATE users SET name = ? WHERE id = ?', (name, user_id))
+    if _USE_POSTGRES:
+        cur = conn.cursor()
+        cur.execute('UPDATE users SET name = %s WHERE id = %s', (name, user_id))
+    else:
+        cur = conn.cursor()
+        cur.execute('UPDATE users SET name = ? WHERE id = ?', (name, user_id))
     conn.commit()
     conn.close()
 
 
 def update_user_password(user_id: int, password_hash: str) -> None:
     conn = get_conn()
-    cur = conn.cursor()
-    cur.execute('UPDATE users SET password_hash = ? WHERE id = ?', (password_hash, user_id))
+    if _USE_POSTGRES:
+        cur = conn.cursor()
+        cur.execute('UPDATE users SET password_hash = %s WHERE id = %s', (password_hash, user_id))
+    else:
+        cur = conn.cursor()
+        cur.execute('UPDATE users SET password_hash = ? WHERE id = ?', (password_hash, user_id))
     conn.commit()
     conn.close()
 
 
 def get_session(token: str):
     conn = get_conn()
-    cur = conn.cursor()
-    cur.execute('SELECT * FROM sessions WHERE token = ?', (token,))
-    row = cur.fetchone()
+    if _USE_POSTGRES:
+        import psycopg2.extras
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute('SELECT * FROM sessions WHERE token = %s', (token,))
+        row = cur.fetchone()
+    else:
+        cur = conn.cursor()
+        cur.execute('SELECT * FROM sessions WHERE token = ?', (token,))
+        row = cur.fetchone()
     conn.close()
     return dict(row) if row else None
 
 
 def delete_session(token: str):
     conn = get_conn()
-    cur = conn.cursor()
-    cur.execute('DELETE FROM sessions WHERE token = ?', (token,))
+    if _USE_POSTGRES:
+        cur = conn.cursor()
+        cur.execute('DELETE FROM sessions WHERE token = %s', (token,))
+    else:
+        cur = conn.cursor()
+        cur.execute('DELETE FROM sessions WHERE token = ?', (token,))
     conn.commit()
     conn.close()
