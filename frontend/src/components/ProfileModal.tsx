@@ -1,4 +1,5 @@
 import React, {useState, useEffect} from 'react';
+import { API_BASE } from '../api';
 
 interface Props {
   visible: boolean;
@@ -27,12 +28,12 @@ export default function ProfileModal({ visible, name, onClose, onSave, onLogout 
         if (token) headers1['token'] = token;
 
         // Try token header first
-        let res = await fetch('/api/auth/me', { headers: headers1 });
+        let res = await fetch(`${API_BASE}/auth/me`, { headers: headers1 });
         if (!res.ok) {
           // Try Authorization Bearer as fallback
           const headers2: Record<string,string> = {};
           if (token) headers2['Authorization'] = `Bearer ${token}`;
-          res = await fetch('/api/auth/me', { headers: headers2 });
+          res = await fetch(`${API_BASE}/auth/me`, { headers: headers2 });
         }
 
         if (!res.ok) {
@@ -73,10 +74,10 @@ export default function ProfileModal({ visible, name, onClose, onSave, onLogout 
       const token = window.localStorage.getItem('vitalscare.token');
       const headers1: Record<string,string> = { 'Content-Type': 'application/json' };
       if (token) headers1['token'] = token;
-      let res = await fetch('/api/auth/me', { method: 'PATCH', headers: headers1, body: JSON.stringify({ name: tmpName }) });
+      let res = await fetch(`${API_BASE}/auth/me`, { method: 'PATCH', headers: headers1, body: JSON.stringify({ name: tmpName }) });
       if (!res.ok && token) {
         const headers2: Record<string,string> = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` };
-        res = await fetch('/api/auth/me', { method: 'PATCH', headers: headers2, body: JSON.stringify({ name: tmpName }) });
+        res = await fetch(`${API_BASE}/auth/me`, { method: 'PATCH', headers: headers2, body: JSON.stringify({ name: tmpName }) });
       }
 
       if (!res.ok) {

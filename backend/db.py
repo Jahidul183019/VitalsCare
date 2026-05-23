@@ -14,8 +14,21 @@ def _pg_conn():
     # Import here to avoid hard requirement when only sqlite is used
     import psycopg2
     import psycopg2.extras
-    conn = psycopg2.connect(DATABASE_URL)
-    return conn
+    # Be resilient to transient network/DNS issues during startup by retrying.
+    max_retries = 5
+    delay = 1.0
+    last_err = None
+    for attempt in range(1, max_retries + 1):
+        try:
+            # set a reasonable connect timeout so attempts fail fast when unreachable
+            conn = psycopg2.connect(DATABASE_URL, connect_timeout=10)
+            return conn
+        except Exception as e:
+            last_err = e
+            if attempt == max_retries:
+                raise
+            time.sleep(delay)
+            delay = min(delay * 2, 10)
 
 
 def get_conn():

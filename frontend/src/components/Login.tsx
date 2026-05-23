@@ -6,6 +6,8 @@ interface LoginProps {
   onRegister?: (token: string, name?: string) => void;
 }
 
+import { API_BASE } from '../api';
+
 export default function Login({ onLogin, onRegister }: LoginProps) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -25,7 +27,7 @@ export default function Login({ onLogin, onRegister }: LoginProps) {
         return;
       }
 
-      const url = isRegister ? '/api/auth/register' : '/api/auth/login';
+      const url = isRegister ? `${API_BASE}/auth/register` : `${API_BASE}/auth/login`;
       const res = await fetch(url, {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},

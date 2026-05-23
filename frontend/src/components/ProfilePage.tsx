@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { API_BASE } from '../api';
 import { Eye, EyeOff } from 'lucide-react';
 
 interface ProfilePageProps {
@@ -38,10 +39,10 @@ export default function ProfilePage({ onBack }: ProfilePageProps) {
       // prefer server profile when available, try two header styles
       if (!token) return;
       try {
-        let res = await fetch('/api/auth/me', { headers: token ? { token } : {} });
+        let res = await fetch(`${API_BASE}/auth/me`, { headers: token ? { token } : {} });
         if (!res.ok) {
           // try Authorization: Bearer <token>
-          res = await fetch('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } });
+          res = await fetch(`${API_BASE}/auth/me`, { headers: { Authorization: `Bearer ${token}` } });
         }
         if (!res.ok) return;
         const j = await res.json();
@@ -60,7 +61,7 @@ export default function ProfilePage({ onBack }: ProfilePageProps) {
     setMsg(null);
     try {
       const token = window.localStorage.getItem('vitalscare.token');
-      const res = await fetch('/api/auth/me', {
+      const res = await fetch(`${API_BASE}/auth/me`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', ...(token ? { token } : {}) },
         body: JSON.stringify({ name }),
@@ -89,7 +90,7 @@ export default function ProfilePage({ onBack }: ProfilePageProps) {
     setLoading(true);
     try {
       const token = window.localStorage.getItem('vitalscare.token');
-      const res = await fetch('/api/auth/change-password', {
+      const res = await fetch(`${API_BASE}/auth/change-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...(token ? { token } : {}) },
         body: JSON.stringify({ current_password: currentPwd, new_password: newPwd }),

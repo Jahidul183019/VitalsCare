@@ -1,6 +1,9 @@
 import { AssessmentData } from './types';
 import { calculateBMI } from './utils';
 
+// Base URL for backend API; defaults to the deployed Render backend.
+export const API_BASE = import.meta.env.VITE_API_BASE ?? 'https://health-risk-radar.onrender.com';
+
 export interface BackendResponse {
   risk_level: string;
   color_code: string;
@@ -31,7 +34,7 @@ export async function submitAssessment(data: AssessmentData): Promise<BackendRes
   const headers: Record<string,string> = { 'Content-Type': 'application/json' };
   if (token) headers['token'] = token;
 
-  const response = await fetch('/api/assess', {
+  const response = await fetch(`${API_BASE}/assess`, {
     method: 'POST',
     headers,
     body: JSON.stringify(payload),

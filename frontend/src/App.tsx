@@ -7,6 +7,7 @@ import RiskDashboard from './components/RiskDashboard';
 import Login from './components/Login';
 import ProfileModal from './components/ProfileModal';
 import ProfilePage from './components/ProfilePage';
+import { API_BASE } from './api';
 
 const PROFILE_STORAGE_KEY = 'vitalscare.profileName';
 
@@ -66,9 +67,9 @@ export default function App() {
   };
 
   const handleProfileLogout = async () => {
-    try {
+      try {
       const tokenLocal = window.localStorage.getItem('vitalscare.token');
-      await fetch('/api/auth/logout', { method: 'POST', headers: tokenLocal ? { token: tokenLocal } : {} });
+      await fetch(`${API_BASE}/auth/logout`, { method: 'POST', headers: tokenLocal ? { token: tokenLocal } : {} });
     } catch (e) {
       // ignore network errors
     }
