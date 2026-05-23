@@ -19,6 +19,7 @@ from typing import Optional
 import secrets
 from passlib.context import CryptContext
 import hashlib
+import traceback
 
 try:
     from . import db
@@ -118,23 +119,37 @@ class AuthPayload(BaseModel):
 
 @app.post('/auth/register')
 def register(p: AuthPayload):
-    existing = db.get_user_by_username(p.username)
-    if existing:
-        raise HTTPException(status_code=400, detail='username-taken')
-    uid = db.create_user(p.username, _hash_password(p.password), p.name)
-    token = secrets.token_urlsafe(32)
-    db.create_session(token, uid)
-    return { 'token': token, 'username': p.username, 'name': p.name }
+    try:
+        existing = db.get_user_by_username(p.username)
+        if existing:
+            raise HTTPException(status_code=400, detail='username-taken')
+        uid = db.create_user(p.username, _hash_password(p.password), p.name)
+        token = secrets.token_urlsafe(32)
+        db.create_session(token, uid)
+        return { 'token': token, 'username': p.username, 'name': p.name }
+    except HTTPException:
+        raise
+    except Exception as exc:
+        print('REGISTER ERROR:', repr(exc))
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f'register-error: {type(exc).__name__}: {exc}')
 
 
 @app.post('/auth/login')
 def login(p: AuthPayload):
-    user = db.get_user_by_username(p.username)
-    if not user or not _verify_password(user['password_hash'], p.password, user['id']):
-        raise HTTPException(status_code=401, detail='invalid-credentials')
-    token = secrets.token_urlsafe(32)
-    db.create_session(token, user['id'])
-    return { 'token': token, 'username': user['username'], 'name': user.get('name') }
+    try:
+        user = db.get_user_by_username(p.username)
+        if not user or not _verify_password(user['password_hash'], p.password, user['id']):
+            raise HTTPException(status_code=401, detail='invalid-credentials')
+        token = secrets.token_urlsafe(32)
+        db.create_session(token, user['id'])
+        return { 'token': token, 'username': user['username'], 'name': user.get('name') }
+    except HTTPException:
+        raise
+    except Exception as exc:
+        print('LOGIN ERROR:', repr(exc))
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f'login-error: {type(exc).__name__}: {exc}')
 
 
 @app.post('/auth/logout')
