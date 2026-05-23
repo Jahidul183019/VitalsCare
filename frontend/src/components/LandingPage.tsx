@@ -81,7 +81,7 @@ export default function LandingPage({ onNavigate, profileName, profileInitials, 
             <button 
               id="start-assessment-btn-top"
               onClick={() => onNavigate('assessment', 'push')}
-              className="bg-teal-700 text-white px-8 py-4 rounded-full font-semibold flex items-center justify-center gap-2 hover:bg-teal-800 transition-all duration-200 soft-shadow hover:scale-[1.01]"
+              className="bg-teal-700 text-white px-6 py-3 sm:px-8 sm:py-4 rounded-full font-semibold flex items-center justify-center gap-2 hover:bg-teal-800 transition-all duration-200 soft-shadow hover:scale-[1.01]"
             >
               Start Assessment
               <ArrowRight className="w-5 h-5" />
@@ -89,7 +89,7 @@ export default function LandingPage({ onNavigate, profileName, profileInitials, 
 
             <a 
               href="#why-it-matters"
-              className="bg-white text-teal-800 border border-neutral-200 hover:border-neutral-300 px-8 py-4 rounded-full font-semibold flex items-center justify-center gap-2 hover:bg-neutral-50 transition-all duration-200 text-center"
+              className="bg-white text-teal-800 border border-neutral-200 hover:border-neutral-300 px-6 py-3 sm:px-8 sm:py-4 rounded-full font-semibold flex items-center justify-center gap-2 hover:bg-neutral-50 transition-all duration-200 text-center"
             >
               Learn More
             </a>
@@ -100,7 +100,7 @@ export default function LandingPage({ onNavigate, profileName, profileInitials, 
         <div className="relative mt-6 md:mt-0 glass-card rounded-[2.5rem] p-4 soft-shadow">
           <img 
             alt="Healthcare professional reviewing analytics on a tablet" 
-            className="rounded-[2rem] w-full object-cover h-[350px] md:h-[450px]" 
+            className="rounded-[2rem] w-full object-cover h-64 md:h-[450px] lg:h-[520px]" 
             referrerPolicy="no-referrer"
             src="https://lh3.googleusercontent.com/aida-public/AB6AXuAuZF0xiorCdUXsEho6A9KM80sGIeAK_SVKIwxWGOge1MlExQjKS_Cj8ZG6rPzBen22yyvKg8DCkLxIDY3_lHlyrBDkCfisVne7jOkltbiPLHF7mDkdPm3czuDZVjaoX12y2_p58sATVPn7NJCx9Oo17iC9cFUUnzgcATTkBp8nuxy4q6JCrA8bnU6jNEhifdqr-CPGMZb3d6b6Ru40CrHCT8e0u89VliXdYlZaBJM0Sq5C46GJrpCE2axGyf7y0XyUUe_cmgjRL6c" 
           />
@@ -267,7 +267,7 @@ export default function LandingPage({ onNavigate, profileName, profileInitials, 
       </section>
 
       {/* Navigation block (Mobile bottom nav conforming to xpath) wrapped inside a nav selector */}
-      <nav className="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-3 md:hidden bg-white/90 backdrop-blur-md border-t border-neutral-200/80 rounded-t-2xl shadow-[0_-10px_35px_rgba(0,0,0,0.06)]">
+      <nav className="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-3 md:hidden bg-white/90 backdrop-blur-md border-t border-neutral-200/80 rounded-t-2xl shadow-[0_-10px_35px_rgba(0,0,0,0.06)] safe-bottom">
         <a 
           href="#" 
           className="flex flex-col items-center justify-center text-teal-800 bg-teal-50/80 px-4 py-1.5 rounded-full transition-transform"

@@ -51,3 +51,15 @@ input[type=range]::-webkit-slider-runnable-track {
   background: #d6e5ef; /* secondary-fixed */
   border-radius: 3px;
 }
+
+/* Safe-area support for mobile bottom navs (iOS) */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 12px);
+}
+
+/* Tweak hero text on very small screens */
+@media (max-width: 420px) {
+  h1, .text-4xl {
+    font-size: 1.6rem;
+  }
+}

@@ -381,7 +381,7 @@ export default function AssessmentForm({ data, onChange, onNavigate, profileName
             <button 
               type="submit"
               id="submit-form-continue-btn"
-              className="bg-teal-700 hover:bg-teal-800 text-white font-bold py-3.5 px-8 rounded-full shadow-md flex items-center gap-2 transform active:scale-95 transition-all text-sm tracking-tight hover:scale-[1.01]"
+              className="bg-teal-700 hover:bg-teal-800 text-white font-bold py-3.5 px-4 sm:px-8 rounded-full shadow-md flex items-center gap-2 transform active:scale-95 transition-all text-sm tracking-tight hover:scale-[1.01]"
             >
               Continue to Insights
               <ArrowRight className="w-5 h-5" />
