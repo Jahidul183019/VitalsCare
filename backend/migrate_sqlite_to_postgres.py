@@ -1,12 +1,9 @@
-"""Migrate data from the local SQLite DB to a Postgres database (e.g. Supabase).
+"""(Moved) Migration helper — kept under backend for convenience.
 
-Usage:
-  Ensure `DATABASE_URL` is set in the environment to the target Postgres DSN.
-  Then run:
-    python scripts/migrate_sqlite_to_postgres.py
+Note: you asked to use Postgres directly and not run a migration. This file was moved
+from `scripts/` for reference and can be removed if you don't plan to use it.
 
-This script will copy `users` and `sessions` tables from `backend/data.sqlite3` to Postgres.
-It will attempt to create target tables if they don't exist.
+It contains the same logic as the original script and only runs when explicitly executed.
 """
 import os
 import sqlite3
@@ -26,7 +23,7 @@ except Exception as e:
     print('psycopg2 is required to run this migration. Install with: pip install psycopg2-binary')
     raise
 
-SQLITE_PATH = Path(__file__).resolve().parent.parent / 'backend' / 'data.sqlite3'
+SQLITE_PATH = Path(__file__).resolve().parent / 'data.sqlite3'
 if not SQLITE_PATH.exists():
     print('SQLite DB not found at', SQLITE_PATH)
     sys.exit(1)
@@ -69,23 +66,18 @@ def migrate():
     ensure_pg_schema(pg)
     cur = pg.cursor()
 
-    # Insert users; attempt to preserve ids by using explicit id insertion when possible
     for u in users:
-        # Check if username exists
         cur.execute('SELECT id FROM users WHERE username = %s', (u['username'],))
         if cur.fetchone():
             print('Skipping existing user', u['username'])
             continue
-        # Insert and return id
         cur.execute('INSERT INTO users (username, password_hash, name) VALUES (%s,%s,%s) RETURNING id', (u['username'], u['password_hash'], u.get('name')))
         new_id = cur.fetchone()[0]
         print('Inserted user', u['username'], 'as id', new_id)
 
     pg.commit()
 
-    # Migrate sessions (map user_id by username)
     for s in sessions:
-        # find username for user_id in sqlite users list
         src_user = next((x for x in users if x['id'] == s['user_id']), None)
         if not src_user:
             print('Skipping session with unknown user id', s['user_id'])
@@ -96,7 +88,6 @@ def migrate():
             print('No target user for session, skipping', src_user['username'])
             continue
         target_user_id = row[0]
-        # insert session, replace if exists
         cur.execute('INSERT INTO sessions (token, user_id, expires_at) VALUES (%s,%s,%s) ON CONFLICT (token) DO UPDATE SET user_id = EXCLUDED.user_id, expires_at = EXCLUDED.expires_at', (s['token'], target_user_id, s['expires_at']))
 
     pg.commit()
