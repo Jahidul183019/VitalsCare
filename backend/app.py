@@ -17,9 +17,8 @@ from pydantic import BaseModel, Field
 from fastapi import HTTPException, Header, Depends
 from typing import Optional
 import secrets
-from passlib.context import CryptContext
 import hashlib
-import traceback
+import bcrypt
 
 try:
     from . import db
@@ -57,37 +56,45 @@ app.add_middleware(
 )
 
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+_HASH_PREFIX = "sha256$"
+
+
+def _password_digest(password: str) -> str:
+    return hashlib.sha256(password.encode("utf-8")).hexdigest()
 
 
 def _hash_password(password: str) -> str:
-    """Hash a password using bcrypt (passlib)."""
-    return pwd_context.hash(password)
+    """Hash a password using SHA-256 then bcrypt to avoid bcrypt's 72-byte limit."""
+    digest = _password_digest(password).encode("utf-8")
+    return f"{_HASH_PREFIX}{bcrypt.hashpw(digest, bcrypt.gensalt()).decode('utf-8')}"
 
 
 def _verify_password(stored_hash: str, password: str, user_id: int | None = None) -> bool:
     """
     Verify a password against stored hash.
-    - If stored_hash is a bcrypt/passlib hash, use pwd_context.verify.
-    - If stored_hash looks like legacy SHA256 hex (64 hex chars), compare and re-hash into bcrypt.
-    If a legacy hash verifies and user_id is provided, upgrade the stored hash to bcrypt.
+    - New hashes are stored as `sha256$<bcrypt hash>`.
+    - Legacy bcrypt hashes are still supported for existing users.
+    - Legacy SHA256 hex hashes are also supported.
     """
+    digest = _password_digest(password)
+
     try:
+        if stored_hash.startswith(_HASH_PREFIX):
+            return bcrypt.checkpw(
+                digest.encode("utf-8"),
+                stored_hash[len(_HASH_PREFIX):].encode("utf-8"),
+            )
+
         # bcrypt/passlib style starts with $2b$ or $2a$ etc.
         if stored_hash.startswith('$'):
-            return pwd_context.verify(password, stored_hash)
+            return bcrypt.checkpw(password.encode("utf-8"), stored_hash.encode("utf-8"))
     except Exception:
         pass
 
     # Fallback: legacy SHA-256 hex
     try:
         if len(stored_hash) == 64 and all(c in '0123456789abcdef' for c in stored_hash.lower()):
-            candidate = hashlib.sha256(password.encode('utf-8')).hexdigest()
-            if candidate == stored_hash:
-                # upgrade to bcrypt if possible
-                if user_id is not None:
-                    db.update_user_password(user_id, _hash_password(password))
-                return True
+            return digest == stored_hash
     except Exception:
         pass
 
@@ -129,10 +136,8 @@ def register(p: AuthPayload):
         return { 'token': token, 'username': p.username, 'name': p.name }
     except HTTPException:
         raise
-    except Exception as exc:
-        print('REGISTER ERROR:', repr(exc))
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f'register-error: {type(exc).__name__}: {exc}')
+    except Exception:
+        raise HTTPException(status_code=500, detail='register-error')
 
 
 @app.post('/auth/login')
@@ -146,10 +151,8 @@ def login(p: AuthPayload):
         return { 'token': token, 'username': user['username'], 'name': user.get('name') }
     except HTTPException:
         raise
-    except Exception as exc:
-        print('LOGIN ERROR:', repr(exc))
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f'login-error: {type(exc).__name__}: {exc}')
+    except Exception:
+        raise HTTPException(status_code=500, detail='login-error')
 
 
 @app.post('/auth/logout')
@@ -188,7 +191,7 @@ def change_password(payload: ChangePasswordPayload, user=Depends(_require_user))
     stored = db.get_user_by_id(user['id'])
     if not stored:
         raise HTTPException(status_code=401, detail='unknown-user')
-    if stored['password_hash'] != _hash_password(payload.current_password):
+    if not _verify_password(stored['password_hash'], payload.current_password, user['id']):
         raise HTTPException(status_code=401, detail='invalid-current-password')
     if len(payload.new_password) < 6:
         raise HTTPException(status_code=400, detail='new-password-too-short')

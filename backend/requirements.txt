@@ -1,5 +1,6 @@
 fastapi
 uvicorn[standard]
 passlib[bcrypt]
+bcrypt
 psycopg2-binary
 gunicorn
