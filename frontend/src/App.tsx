@@ -67,13 +67,14 @@ export default function App() {
   };
 
   const handleProfileLogout = async () => {
-      try {
+    try {
       const tokenLocal = window.localStorage.getItem('vitalscare.token');
       await fetch(`${API_BASE}/auth/logout`, { method: 'POST', headers: tokenLocal ? { token: tokenLocal } : {} });
     } catch (e) {
       // ignore network errors
     }
     handleLogout();
+    setCurrentScreen('landing');
     setProfileModalOpen(false);
   };
 
@@ -157,7 +158,7 @@ export default function App() {
               )}
 
               {currentScreen === 'profile' && (
-                <ProfilePage onBack={() => handleNavigation('landing', 'push')} />
+                <ProfilePage onBack={() => handleNavigation('landing', 'push')} onLogout={handleProfileLogout} />
               )}
 
               <ProfileModal visible={profileModalOpen} name={profileName} onClose={() => setProfileModalOpen(false)} onSave={handleProfileSave} onLogout={handleProfileLogout} />

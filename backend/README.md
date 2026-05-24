@@ -17,7 +17,21 @@ It is designed for a hackathon demo, so the logic is intentionally simple, expla
 - Includes explicit explanation fields so the score is easy to justify
 - Produces clean JSON from an HTTP endpoint
 
-## Run
+## Install
+
+```bash
+pip install -r requirements.txt
+```
+
+## Run locally
+
+From the `backend/` folder:
+
+```bash
+uvicorn app:app --reload
+```
+
+If you prefer to run from the project root, use:
 
 ```bash
 uvicorn backend.app:app --reload
@@ -63,3 +77,5 @@ Required fields:
 - The model is intentionally conservative and explainable.
 - The recommendation text is written for a community screening demo and should be reviewed with clinical partners before real-world use.
 - The frontend calls this API through Vite's `/api` proxy during local development.
+- The backend uses PostgreSQL when `DATABASE_URL` is set, which is the expected Render deployment setup.
+- If `DATABASE_URL` is not set, the backend falls back to the local SQLite database file in `backend/data.sqlite3` for development.

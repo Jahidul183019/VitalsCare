@@ -22,12 +22,12 @@ cd backend
 if [ ! -d "venv" ]; then
     echo "Creating virtual environment..."
     python3 -m venv venv
-    source venv/bin/activate
-    # Install dependencies since requirements.txt might not exist
-    pip install fastapi uvicorn pydantic
 else
     source venv/bin/activate
 fi
+
+# Install the full backend dependency set so fresh environments work too.
+pip install -r requirements.txt
 
 # Run the backend in the background (&)
 python3 app.py &

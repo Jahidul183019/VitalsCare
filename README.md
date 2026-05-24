@@ -2,7 +2,7 @@
 
 Backend-plus-frontend prototype for Infinity AI BuildFest 2026.
 
-This project is a simple, explainable HealthTech demo for rural community screening. It takes a small set of patient inputs, computes risk for key conditions, and returns a JSON response that the frontend renders directly.
+This project is a simple, explainable HealthTech demo for rural community screening. It includes authentication, a profile page, a landing page, an assessment form, and a dashboard that renders the backend's JSON response directly.
 
 ## Project Structure
 
@@ -10,6 +10,7 @@ This project is a simple, explainable HealthTech demo for rural community screen
 Health-Risk-Radar/
 ├── backend/
 │   ├── app.py
+│   ├── db.py
 │   ├── risk_engine.py
 │   ├── recommendations.json
 │   └── README.md
@@ -25,6 +26,8 @@ Health-Risk-Radar/
 - Validates incoming patient data with Pydantic
 - Sends the data to the explainable scoring engine in `risk_engine.py`
 - Returns JSON containing risk level, color code, contributing factors, and recommendation
+- Handles login, register, profile update, password change, and logout endpoints
+- Uses PostgreSQL when `DATABASE_URL` is set, with SQLite fallback for local development
 
 ## Risk Logic
 
@@ -35,21 +38,41 @@ The scoring engine uses transparent, rule-based logic for:
 
 It also uses `recommendations.json` to map a primary condition and risk level to localized advice suitable for a community health worker in rural Bangladesh.
 
-## Frontend Plan
+## Frontend
 
 The `frontend/` folder contains the UI layer. It calls the backend through a Vite proxy and renders:
 
+- login and registration screens
+- landing page navigation
+- profile and logout flow
 - risk level
 - color-coded status
 - contributing factors
 - actionable recommendation
+
+### Frontend development
+
+From the `frontend/` folder:
+
+```bash
+npm install
+npm run dev
+```
+
+The Vite dev server runs on `http://localhost:3000/` and proxies `/api` to `http://127.0.0.1:8000`.
+
+To verify the frontend build:
+
+```bash
+npm run build
+```
 
 ## Local Setup
 
 From the project root, install dependencies if needed:
 
 ```bash
-cd backend && python3 -m venv venv && source venv/bin/activate && pip install fastapi uvicorn pydantic
+cd backend && pip install -r requirements.txt
 cd ../frontend && npm install
 ```
 
@@ -61,10 +84,16 @@ bash start.sh
 
 This starts both services:
 
-- Frontend: `http://localhost:3000/`
+- Frontend: `http://localhost:3000/` or the next available Vite port if 3000 is busy
 - Backend: `http://127.0.0.1:8000/`
 
-If you want to run only the backend, use:
+If you want to run only the backend from the `backend/` folder, use:
+
+```bash
+uvicorn app:app --reload
+```
+
+If you want to run only the backend from the project root, use:
 
 ```bash
 uvicorn backend.app:app --reload
@@ -116,3 +145,4 @@ curl -X POST http://127.0.0.1:8000/assess \
 - The logic is intentionally simple and explainable for a hackathon demo.
 - The localized recommendation content is meant for community screening and should be reviewed with medical partners before real-world use.
 - The frontend posts to `/api/assess`, which Vite proxies to the backend `/assess` endpoint.
+- Set `DATABASE_URL` on Render or any Postgres host to enable the Postgres-backed runtime.

@@ -1,8 +1,8 @@
 import { AssessmentData } from './types';
 import { calculateBMI } from './utils';
 
-// Base URL for backend API; defaults to the deployed Render backend.
-export const API_BASE = import.meta.env.VITE_API_BASE ?? 'https://health-risk-radar.onrender.com';
+// Base URL for backend API; defaults to the local Vite proxy for development.
+export const API_BASE = import.meta.env.VITE_API_BASE ?? '/api';
 
 export interface BackendResponse {
   risk_level: string;
