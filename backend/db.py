@@ -125,19 +125,29 @@ def get_user_by_username(username: str):
 
 def create_user(username: str, password_hash: str, name: str | None = None) -> int:
     conn = get_conn()
-    if _USE_POSTGRES:
-        import psycopg2.extras
-        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        cur.execute('INSERT INTO users(username, password_hash, name) VALUES (%s, %s, %s) RETURNING id', (username, password_hash, name))
-        uid = cur.fetchone()['id']
-        conn.commit()
-    else:
-        cur = conn.cursor()
-        cur.execute('INSERT INTO users(username, password_hash, name) VALUES (?,?,?)', (username, password_hash, name))
-        conn.commit()
-        uid = cur.lastrowid
-    conn.close()
-    return uid
+    try:
+        if _USE_POSTGRES:
+            import psycopg2.extras
+            cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            cur.execute('INSERT INTO users(username, password_hash, name) VALUES (%s, %s, %s) RETURNING id', (username, password_hash, name))
+            uid = cur.fetchone()['id']
+            conn.commit()
+        else:
+            cur = conn.cursor()
+            cur.execute('INSERT INTO users(username, password_hash, name) VALUES (?,?,?)', (username, password_hash, name))
+            conn.commit()
+            uid = cur.lastrowid
+        return uid
+    except Exception as exc:
+        conn.rollback()
+        is_unique_violation = isinstance(exc, sqlite3.IntegrityError)
+        if not is_unique_violation and _USE_POSTGRES:
+            is_unique_violation = getattr(exc, 'pgcode', None) == '23505'
+        if is_unique_violation:
+            raise ValueError('username-taken') from exc
+        raise
+    finally:
+        conn.close()
 
 
 def get_user_by_id(user_id: int):

@@ -17,6 +17,8 @@ export default function Login({ onLogin, onRegister }: LoginProps) {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  const usernameRules = '3-20 characters, start with a letter, and use only letters, numbers, or underscores.';
+
   function getFriendlyAuthError(detail: unknown, isRegisterFlow: boolean) {
     if (typeof detail !== 'string') {
       return isRegisterFlow ? 'We could not create your account right now. Please try again.' : 'We could not sign you in right now. Please try again.';
@@ -25,6 +27,7 @@ export default function Login({ onLogin, onRegister }: LoginProps) {
     const errorMap: Record<string, string> = {
       'invalid-credentials': 'Incorrect username or password. Please try again.',
       'username-taken': 'That username is already taken. Please choose a different one.',
+      'invalid-username': `Username must be ${usernameRules}`,
       'register-error': 'We could not create your account right now. Please try again.',
       'login-error': 'We could not sign you in right now. Please try again.',
       'new-password-too-short': 'The new password must be at least 6 characters long.',
@@ -178,8 +181,17 @@ export default function Login({ onLogin, onRegister }: LoginProps) {
                     value={username}
                     onChange={e => setUsername(e.target.value)}
                     placeholder="Username"
+                    minLength={3}
+                    maxLength={20}
+                    pattern="[A-Za-z][A-Za-z0-9_]*"
+                    title={usernameRules}
+                    autoComplete="username"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
                     className="w-full rounded-2xl border border-neutral-200 bg-white px-4 py-3 outline-none transition focus:border-teal-400 focus:ring-4 focus:ring-teal-100"
                   />
+                  {isRegister && <p className="mt-2 text-xs text-neutral-500">{usernameRules}</p>}
                 </div>
 
                 <div>

@@ -8,6 +8,7 @@ This module keeps the serving layer thin:
 
 from __future__ import annotations
 
+import re
 from typing import Literal
 
 import uvicorn
@@ -57,6 +58,9 @@ app.add_middleware(
 
 
 _HASH_PREFIX = "sha256$"
+_USERNAME_MIN_LENGTH = 3
+_USERNAME_MAX_LENGTH = 20
+_USERNAME_PATTERN = re.compile(r"^[A-Za-z][A-Za-z0-9_]*$")
 
 
 def _password_digest(password: str) -> str:
@@ -67,6 +71,17 @@ def _hash_password(password: str) -> str:
     """Hash a password using SHA-256 then bcrypt to avoid bcrypt's 72-byte limit."""
     digest = _password_digest(password).encode("utf-8")
     return f"{_HASH_PREFIX}{bcrypt.hashpw(digest, bcrypt.gensalt()).decode('utf-8')}"
+
+
+def _validate_username(username: str) -> str:
+    cleaned = username.strip()
+    if (
+        len(cleaned) < _USERNAME_MIN_LENGTH
+        or len(cleaned) > _USERNAME_MAX_LENGTH
+        or not _USERNAME_PATTERN.fullmatch(cleaned)
+    ):
+        raise HTTPException(status_code=400, detail='invalid-username')
+    return cleaned
 
 
 def _verify_password(stored_hash: str, password: str, user_id: int | None = None) -> bool:
@@ -127,15 +142,20 @@ class AuthPayload(BaseModel):
 @app.post('/auth/register')
 def register(p: AuthPayload):
     try:
-        existing = db.get_user_by_username(p.username)
+        username = _validate_username(p.username)
+        existing = db.get_user_by_username(username)
         if existing:
             raise HTTPException(status_code=400, detail='username-taken')
-        uid = db.create_user(p.username, _hash_password(p.password), p.name)
+        uid = db.create_user(username, _hash_password(p.password), p.name)
         token = secrets.token_urlsafe(32)
         db.create_session(token, uid)
-        return { 'token': token, 'username': p.username, 'name': p.name }
+        return { 'token': token, 'username': username, 'name': p.name }
     except HTTPException:
         raise
+    except ValueError as exc:
+        if str(exc) == 'username-taken':
+            raise HTTPException(status_code=400, detail='username-taken')
+        raise HTTPException(status_code=400, detail='invalid-username')
     except Exception:
         raise HTTPException(status_code=500, detail='register-error')
 
@@ -143,7 +163,8 @@ def register(p: AuthPayload):
 @app.post('/auth/login')
 def login(p: AuthPayload):
     try:
-        user = db.get_user_by_username(p.username)
+        username = _validate_username(p.username)
+        user = db.get_user_by_username(username)
         if not user or not _verify_password(user['password_hash'], p.password, user['id']):
             raise HTTPException(status_code=401, detail='invalid-credentials')
         token = secrets.token_urlsafe(32)
@@ -151,6 +172,8 @@ def login(p: AuthPayload):
         return { 'token': token, 'username': user['username'], 'name': user.get('name') }
     except HTTPException:
         raise
+    except ValueError:
+        raise HTTPException(status_code=400, detail='invalid-username')
     except Exception:
         raise HTTPException(status_code=500, detail='login-error')
 
