@@ -17,6 +17,27 @@ export default function Login({ onLogin, onRegister }: LoginProps) {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  function getFriendlyAuthError(detail: unknown, isRegisterFlow: boolean) {
+    if (typeof detail !== 'string') {
+      return isRegisterFlow ? 'We could not create your account right now. Please try again.' : 'We could not sign you in right now. Please try again.';
+    }
+
+    const errorMap: Record<string, string> = {
+      'invalid-credentials': 'Incorrect username or password. Please try again.',
+      'username-taken': 'That username is already taken. Please choose a different one.',
+      'register-error': 'We could not create your account right now. Please try again.',
+      'login-error': 'We could not sign you in right now. Please try again.',
+      'new-password-too-short': 'The new password must be at least 6 characters long.',
+      'invalid-current-password': 'The current password you entered is incorrect.',
+      'unknown-user': 'Your account could not be found. Please sign in again.',
+      'Missing auth token': 'Your session has expired. Please sign in again.',
+      'Invalid or expired token': 'Your session has expired. Please sign in again.',
+      'Unknown user': 'Your session is no longer valid. Please sign in again.',
+    };
+
+    return errorMap[detail] ?? detail;
+  }
+
   async function doAuth(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -33,8 +54,9 @@ export default function Login({ onLogin, onRegister }: LoginProps) {
         body: JSON.stringify({ username, password, name: name || undefined }),
       });
       if (!res.ok) {
-        const j = await res.json().catch(() => ({}));
-        throw new Error(j.detail || 'Auth failed');
+        const body = await res.json().catch(() => null);
+        const detail = body && typeof body === 'object' && 'detail' in body ? (body as { detail?: unknown }).detail : null;
+        throw new Error(getFriendlyAuthError(detail ?? res.statusText ?? 'Auth failed', isRegister));
       }
       const j = await res.json();
       // store token and username locally for subsequent requests
@@ -43,7 +65,7 @@ export default function Login({ onLogin, onRegister }: LoginProps) {
       window.localStorage.setItem('vitalscare.username', j.username);
       onLogin(j.token, j.name || j.username);
     } catch (err: any) {
-      setError(String(err.message || err));
+      setError(String(err?.message || 'Something went wrong. Please try again.'));
     }
   }
 
@@ -208,7 +230,11 @@ export default function Login({ onLogin, onRegister }: LoginProps) {
                   </div>
                 )}
 
-                {error && <div className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
+                {error && (
+                  <div className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert" aria-live="polite">
+                    {error}
+                  </div>
+                )}
 
                 <button className="inline-flex items-center justify-center gap-2 rounded-full bg-teal-700 px-6 py-3.5 text-sm font-semibold text-white transition-all hover:bg-teal-800 hover:-translate-y-0.5 soft-shadow">
                   {isRegister ? 'Register' : 'Login'}
