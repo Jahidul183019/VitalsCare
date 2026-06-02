@@ -205,6 +205,29 @@ async def assess(patient: PatientData):
             user_id, lang
         )
 
+        # Select dominant disease details for backward compatibility with frontend
+        dominant_key = max(risk_scores, key=lambda k: risk_scores[k]["probability"])
+        dominant_data = risk_scores[dominant_key]
+        
+        # Color mapping (expected format: Green, Yellow, Red)
+        color_map = {"green": "Green", "yellow": "Yellow", "red": "Red"}
+        # Risk level mapping (expected format: Low, Medium, High)
+        level_map = {"low": "Low", "medium": "Medium", "high": "High"}
+        # Disease display names mapping
+        disease_display_names = {
+            "hypertension": "Hypertension",
+            "diabetes": "Diabetes",
+            "heart_disease": "Heart Disease"
+        }
+
+        # Select primary recommendation
+        primary_recommendation = ""
+        if ai_recommendation.get("status") == "success":
+            primary_recommendation = ai_recommendation.get("ai_advice", "")
+        
+        if not primary_recommendation:
+            primary_recommendation = dominant_data.get("recommendation", "")
+
         return {
             "status": "success",
             "language": lang,
@@ -218,7 +241,18 @@ async def assess(patient: PatientData):
                 "step3": "Knowledge Graph ✅",
                 "step4": "Ollama Local LLM ✅",
                 "step5": "Personalization ✅"
-            }
+            },
+            # Compatibility fields for frontend
+            "risk_score": int(round(dominant_data["probability"])),
+            "risk_level": level_map.get(dominant_data["risk_level"], "Low"),
+            "color_code": color_map.get(dominant_data["color"], "Green"),
+            "dominant_condition": disease_display_names.get(dominant_key, "Hypertension"),
+            "condition_scores": {
+                "Hypertension": int(round(risk_scores.get("hypertension", {}).get("probability", 0))),
+                "Diabetes": int(round(risk_scores.get("diabetes", {}).get("probability", 0))),
+                "Heart Disease": int(round(risk_scores.get("heart_disease", {}).get("probability", 0)))
+            },
+            "recommendation": primary_recommendation
         }
 
     except Exception as e:
