@@ -148,14 +148,19 @@ def get_fallback_advice(risk_scores: dict, lang: str) -> str:
     ]
 
     if lang == "bn":
-        return (
-            f"উচ্চ ঝুঁকি: {', '.join(high_risks)}. ডাক্তার দেখান।"
-            if high_risks else
-            "আপনার স্বাস্থ্য ভালো আছে।"
-        )
+        if high_risks:
+            return f"আপনার {', '.join(high_risks)}-এর উচ্চ ঝুঁকি আছে। দয়া করে ডাক্তারের পরামর্শ নিন।"
+        return "আপনার স্বাস্থ্য ঝুঁকি কম। সুস্থ জীবনযাপন চালিয়ে যান।"
+    else:
+        if high_risks:
+            return f"High risk detected for {', '.join(high_risks)}. Please consult a doctor."
+        return "Your health risk is low. Keep maintaining healthy habits."
 
-    return (
-        f"High risk: {', '.join(high_risks)}. See doctor."
-        if high_risks else
-        "Your health is good."
-    )
+
+def check_ollama_running() -> bool:
+    """Check if Ollama is running"""
+    try:
+        models = ollama.list()
+        return True
+    except:
+        return False
