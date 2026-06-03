@@ -94,7 +94,12 @@ export default function RiskDashboard({
 
   // Interactive Online Appointment Booking State
   const [selectedService, setSelectedService] = useState("CVD");
-  const [bookingDate, setBookingDate] = useState("2026-06-04");
+  const getTomorrowDate = () => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return tomorrow.toISOString().split('T')[0];
+  };
+  const [bookingDate, setBookingDate] = useState(getTomorrowDate());
   const [bookingTime, setBookingTime] = useState("09:00 AM - 11:30 AM");
   const [isBookingConfirmed, setIsBookingConfirmed] = useState(false);
   const [referralTicketCode, setReferralTicketCode] = useState("");
@@ -883,7 +888,7 @@ export default function RiskDashboard({
                           required
                           value={bookingDate}
                           onChange={(e) => setBookingDate(e.target.value)}
-                          min="2026-06-04"
+                          min={getTomorrowDate()}
                           className="w-full bg-surface-container-lowest border border-outline-variant/50 focus:border-primary rounded-xl pl-9 pr-3 py-2.5 text-xs font-bold font-mono text-on-surface outline-none"
                         />
                       </div>

@@ -61,44 +61,7 @@ export default function App() {
         // Fallback
       }
     }
-    // Bootstrap database with Sarah
-    const initialDb = {
-      "sarah@vitalcare.com": {
-        displayName: "Sarah",
-        password: "password123",
-        assessmentData: DEFAULT_ASSESSMENT,
-        assessmentHistory: [
-          {
-            date: "Feb 15",
-            hypertensionRisk: 64,
-            diabetesRisk: 58,
-            overallRisk: 61,
-            systolic: 145,
-            diastolic: 92,
-            weight: 76,
-          },
-          {
-            date: "Apr 10",
-            hypertensionRisk: 48,
-            diabetesRisk: 44,
-            overallRisk: 46,
-            systolic: 132,
-            diastolic: 85,
-            weight: 73,
-          }
-        ],
-        riskResults: {
-          hypertensionRisk: 35,
-          diabetesRisk: 32,
-          overallRisk: 34,
-          overallRiskLabel: "Medium",
-          findings: ["Excellent overall metabolic and arterial biomarkers observed."],
-          recommendations: ["Continue your positive hydration, custom diet, and workout habits!"]
-        }
-      }
-    };
-    localStorage.setItem("vitalcare_accounts", JSON.stringify(initialDb));
-    return initialDb;
+    return {};
   });
 
   const [assessmentData, setAssessmentData] = useState<AssessmentData>(DEFAULT_ASSESSMENT);
