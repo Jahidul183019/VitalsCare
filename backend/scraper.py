@@ -148,7 +148,7 @@ Text to translate:
 {short_text}"""
 
     try:
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_api_key}"
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key={gemini_api_key}"
         payload = {
             "contents": [{"parts": [{"text": prompt}]}],
             "generationConfig": {"temperature": 0.2}

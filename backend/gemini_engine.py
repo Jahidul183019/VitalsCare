@@ -65,7 +65,7 @@ Max 150 words.
         }
 
     try:
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key={GEMINI_API_KEY}"
         
         payload = {
             "contents": [{
@@ -93,7 +93,7 @@ Max 150 words.
 
         return {
             "ai_advice": ai_text,
-            "model": "gemini-1.5-flash",
+            "model": "gemini-3.5-flash",
             "language": lang,
             "status": "success"
         }
@@ -138,7 +138,7 @@ No medical jargon.
         return f"{disease} risk is {risk_level} based on health data."
 
     try:
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key={GEMINI_API_KEY}"
         
         payload = {
             "contents": [{
@@ -168,7 +168,7 @@ def check_gemini_running() -> bool:
     if not GEMINI_API_KEY:
         return False
     try:
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash?key={GEMINI_API_KEY}"
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash?key={GEMINI_API_KEY}"
         r = requests.get(url, timeout=5)
         return r.status_code == 200
     except:
