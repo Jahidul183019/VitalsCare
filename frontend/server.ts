@@ -284,7 +284,7 @@ app.post("/api/assess", async (req, res) => {
     Return a structured JSON risk evaluation matching the specified schema. Keep findings and recommendations practical, supportive, and specifically tailored for early non-communicable disease (NCD) screening awareness in Bangladesh.`;
 
     const response = await ai.models.generateContent({
-      model: "gemini-3.5-flash",
+      model: "gemini-2.5-flash",
       contents: prompt,
       config: {
         systemInstruction: "You are a professional medical risk analyzer specializing in cardiovascular and metabolic diseases. Provide exact, scientifically sound estimations of hypertension and diabetes risks. Always reply constructingly and precisely.",
@@ -342,16 +342,17 @@ app.post("/api/assess", async (req, res) => {
 // Chatbot Assist endpoint
 app.post("/api/chat", async (req, res) => {
   const { messages } = req.body;
-  const isKeyAvailable = !!process.env.GEMINI_API_KEY;
+  const apiKey = process.env.CHATBOT_API_KEY || process.env.GEMINI_API_KEY;
+  const isKeyAvailable = !!apiKey;
 
   if (!isKeyAvailable) {
     return res.json({
-      text: "Hello! I am your VitalCare Assistant. (Demo Mode: GEMINI_API_KEY is not configured yet in the Settings secrets). In this preview, I can guide you through using the app! You can navigate to Home to inspect the dashboard, or head to the 'Assess' tab at the top or bottom to initiate a live hypertension and diabetes screening assessment. Once completed, your live risk gauge, insights, and actions will update beautifully! Please consult a real doctor for clinical diagnosis.",
+      text: "Hello! I am your VitalCare Assistant. (Demo Mode: CHATBOT_API_KEY or GEMINI_API_KEY is not configured yet in the Settings secrets). In this preview, I can guide you through using the app! You can navigate to Home to inspect the dashboard, or head to the 'Assess' tab at the top or bottom to initiate a live hypertension and diabetes screening assessment. Once completed, your live risk gauge, insights, and actions will update beautifully! Please consult a real doctor for clinical diagnosis.",
     });
   }
 
   try {
-    const ai = getGeminiClient();
+    const ai = new GoogleGenAI({ apiKey: apiKey! });
 
     // Map message history to standard schema
     const formattedContents = messages.map((m: any) => ({
@@ -360,7 +361,7 @@ app.post("/api/chat", async (req, res) => {
     }));
 
     const response = await ai.models.generateContent({
-      model: "gemini-3.5-flash",
+      model: "gemini-2.5-flash",
       contents: formattedContents,
       config: {
         systemInstruction: `You are VitalCare Assistant, an empathetic, highly specialized and professional medical information assistant for non-communicable disease (NCD) preventative screening (including diabetes, high blood pressure, CVD, diet, cardiac workloads, and lifestyle modifications) in Bangladesh. 
@@ -380,7 +381,7 @@ app.post("/api/chat", async (req, res) => {
   } catch (err: any) {
     console.error("Gemini chat failed:", err.message);
     return res.status(500).json({
-      error: "AI service is currently unavailable. Please verify your GEMINI_API_KEY settings.",
+      error: "AI service is currently unavailable. Please verify your CHATBOT_API_KEY settings.",
     });
   }
 });
