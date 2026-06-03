@@ -194,3 +194,65 @@ def get_fallback_advice(risk_scores: dict, lang: str) -> str:
             return f"High risk detected for {', '.join(high_risks)}. Please consult a doctor."
         return "Your health risk is low. Keep maintaining healthy habits."
 
+
+# =========================
+# CHATBOT ASSISTANT
+# =========================
+def chat_with_gemini(messages: list, lang: str = "en") -> str:
+    system_instruction = f"""
+    You are VitalCare Assistant, an empathetic, highly specialized and professional medical information assistant for non-communicable disease (NCD) preventative screening in Bangladesh. 
+
+    CRITICAL HEALTHCARE BOT RULES:
+    - Maintain a humble, professional, clear, and clinical precision tone at all times.
+    - Encourage healthy diets (low-salt, low-starch, whole foods), exercise, and routine medical evaluations.
+    - You must always state that your advice is for informational and screening awareness purposes only, and cannot substitute for a licensed professional physician or formal medical diagnosis.
+    - Keep your paragraphs clear, readable, and highly focused. Limit responses to around 150-200 words.
+    """
+    
+    if lang == "bn":
+        system_instruction += "\n- If the user asks in Bengali (বাংলা), respond in perfect, warm and natural Bengali. E.g., using polite 'আপনি' address."
+    
+    if not GEMINI_API_KEY:
+        if lang == "bn":
+            return "আমি বর্তমানে অফলাইন মুডে চলছি কারণ সার্ভার সম্পূর্ণ লোড হচ্ছে। একটি সক্রিয় এআই উত্তর পেতে আপনি আমাদের 'Assess' স্ক্রীনিং প্রোগ্রামটি চালু করতে পারেন!"
+        return "I am currently running in Offline mode as the server has not fully loaded. To see a dynamic response, you can launch the Screening Assessment program!"
+
+    try:
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key={GEMINI_API_KEY}"
+        
+        # Map message history to Gemini format
+        formatted_contents = []
+        for m in messages:
+            role = "user" if m.get("sender") == "user" else "model"
+            formatted_contents.append({
+                "role": role,
+                "parts": [{"text": m.get("text", "")}]
+            })
+            
+        payload = {
+            "contents": formatted_contents,
+            "systemInstruction": {
+                "role": "user",
+                "parts": [{"text": system_instruction}]
+            },
+            "generationConfig": {
+                "maxOutputTokens": 300,
+                "temperature": 0.3
+            }
+        }
+        
+        response = requests.post(url, json=payload, headers={"Content-Type": "application/json"}, timeout=15)
+        response_data = response.json()
+        
+        if response.status_code != 200:
+            raise Exception(f"Gemini Chat API Error: {response_data.get('error', {}).get('message', 'Unknown Error')}")
+            
+        return response_data.get("candidates", [])[0].get("content", {}).get("parts", [])[0].get("text", "")
+
+    except Exception as e:
+        print(f"Chatbot Gemini Error: {e}")
+        if lang == "bn":
+            return "দুঃখিত, এআই সার্ভারটি বর্তমানে উপলব্ধ নেই। অনুগ্রহ করে আপনার সেটিংস যাচাই করুন।"
+        return "AI service is currently unavailable. Please verify your GEMINI_API_KEY settings or try again later."
+
+

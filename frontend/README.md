@@ -1,32 +1,20 @@
-# Frontend
+<div align="center">
+<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
+</div>
 
-This folder contains the React UI for VitalsCare / Health Risk Radar.
+# Run and deploy your AI Studio app
 
-Current frontend responsibilities:
+This contains everything you need to run your app locally.
 
-- show the landing page and navigation shell
-- handle login, registration, profile, and logout flows
-- collect patient inputs in the assessment form
-- call the FastAPI backend through `/api/assess`
-- display the returned JSON risk summary, including risk level, color code, contributing factors, and recommendation
+View your app in AI Studio: https://ai.studio/apps/cd36fc04-98d4-4a60-bc61-2d6a02de5083
 
-## Local development
+## Run Locally
 
-Run the frontend from this folder with:
+**Prerequisites:**  Node.js
 
-```bash
-npm install
-npm run dev
-```
 
-The Vite dev server runs on `http://localhost:3000/` and proxies `/api` to the backend at `http://127.0.0.1:8000`, so the frontend can talk to the API without hard-coding a backend URL.
-
-## Production build
-
-```bash
-npm run build
-```
-
-## If you want both services together
-
-Run the root-level `start.sh` script from the project root.
+1. Install dependencies:
+   `npm install`
+2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
+3. Run the app:
+   `npm run dev`

@@ -1,327 +1,439 @@
-import { Heart, Activity, ShieldAlert, Users, TrendingDown, ArrowRight, ShieldCheck, HeartPulse, Home } from 'lucide-react';
-import { ScreenType, TransitionType } from '../types';
+import React from "react";
+import { 
+  HeartHandshake, 
+  ChevronRight, 
+  ArrowRight, 
+  Check, 
+  Activity, 
+  Users, 
+  FileText, 
+  HelpCircle,
+  HelpCircle as QuestionIcon,
+  Shield, 
+  PhoneCall, 
+  Activity as MapIcon,
+  Globe,
+  Sun,
+  Moon,
+  MessageSquare
+} from "lucide-react";
+import { ViewType } from "../types";
 
 interface LandingPageProps {
-  onNavigate: (screen: ScreenType, transition: TransitionType) => void;
-  profileName: string;
-  profileInitials: string;
-  onProfileClick?: () => void;
+  lang: "EN" | "BN";
+  setLang: (lang: "EN" | "BN") => void;
+  theme: "light" | "dark";
+  setTheme: (theme: "light" | "dark") => void;
+  onNavigate: (view: ViewType) => void;
 }
 
-export default function LandingPage({ onNavigate, profileName, profileInitials, onProfileClick }: LandingPageProps) {
+export default function LandingPage({
+  lang,
+  setLang,
+  theme,
+  setTheme,
+  onNavigate,
+}: LandingPageProps) {
+  
+  // High fidelity translations dictionary
+  const t = {
+    EN: {
+      tag: "AI-POWERED PREVENTIVE CARE",
+      heroTitle: "Identify Health Risks Before They Appear.",
+      heroDesc: "Using advanced biometric analysis and regional data, VitalCare maps your health trajectory to provide actionable, clinical-grade risk assessments.",
+      btnCheck: "Check Your Health Risk",
+      btnRadar: "View Live Radar",
+      trusted: "Trusted by 500+ Medical Specialists",
+      diagTitle: "Precision Diagnostics",
+      diagSubtitle: "Science-backed tools for proactive health management.",
+      feat1Title: "Predictive Risk Modeling",
+      feat1Desc: "Our algorithms analyze 150+ variables including genetics, lifestyle, and local environmental data to forecast potential metabolic and cardiovascular risks.",
+      feat2Title: "Community Health",
+      feat2Desc: "Engage with localized health trends and support groups monitored by certified clinicians.",
+      feat2Count: "12 Active Threads Near You",
+      feat3Title: "Custom Action Plans",
+      feat3Desc: "Personalized nutrition and activity protocols designed to mitigate your specific high-risk factors.",
+      feat4Title: "Real-time Clinic Integration",
+      feat4Desc: "Directly sync your assessment results with partner clinics for seamless consultation.",
+      feat4Action: "Find a clinic",
+      stepsTitle: "3 Steps to Health Clarity",
+      step1Name: "Data Intake",
+      step1Desc: "Complete a 5-minute health profile and sync your wearable data.",
+      step2Name: "AI Synthesis",
+      step2Desc: "Our HIPAA-compliant engine cross-references clinical databases.",
+      step3Name: "Risk Report",
+      step3Desc: "Receive a prioritized dashboard with lifestyle interventions.",
+      alertTitle: "Dengue Alert: High Risk Zone Detected",
+      alertDesc: "Preventive measures updated for your current area. View latest guidelines.",
+      alertAction: "Update Awareness",
+      faqTitle: "Frequently Asked",
+      faqQ1: "Is my health data secure?",
+      faqA1: "We use AES-256 encryption and are fully HIPAA and GDPR compliant. Your data is yours; we never sell it to third parties.",
+      faqQ2: "How accurate are the predictions?",
+      faqA2: "Our models maintain a 92% sensitivity rate based on retrospective clinical trials. However, they are for awareness and do not replace professional medical advice.",
+      faqQ3: "Can I sync with my Apple Watch?",
+      faqA3: "Yes, VitalCare supports native integration with Apple Health, Google Fit, and Garmin devices.",
+      ctaTitle: "Start Your Proactive Health Journey Today.",
+      ctaDesc: "Join thousands of users taking control of their future health with VitalCare's Clinical Radar.",
+      ctaBtn: "Create Free Health Profile",
+      outcomes: "Patient Outcomes",
+      quote1: "VitalCare flagged a potential hypertension risk three months before I felt any symptoms. The early intervention plan literally changed my life.",
+      user1: "Ahmed Khan",
+      user1Desc: "Active User, 42",
+      quote2: "As a practitioner, having patients arrive with these risk data points makes our consultations 10x more efficient and data-driven.",
+      user2: "Dr. Sarah Pervez",
+      user2Desc: "Cardiologist",
+    },
+    BN: {
+      tag: "এআই-চালিত প্রতিরোধমূলক যত্ন",
+      heroTitle: "উদ্বেগ এড়াতে আগেই স্বাস্থ্যঝুঁকি জানুন।",
+      heroDesc: "উন্নত বায়োমেট্রিক বিশ্লেষণ এবং আঞ্চলিক ডাটা ব্যবহার করে, ভাইটালকেয়ার আপনার স্বাস্থ্য গতিপথ নির্ধারণ করে এবং বাস্তবমুখী, ক্লিনিকাল-গ্রেড ঝুঁকি মূল্যায়ন প্রদান করে।",
+      btnCheck: "স্বাস্থ্যঝুঁকি পরীক্ষা করুন",
+      btnRadar: "লাইভ রাডার দেখুন",
+      trusted: "৫০০+ চিকিৎসকদের দ্বারা বিশ্বস্ত",
+      diagTitle: "নির্ভুল ডায়াগনস্টিকস",
+      diagSubtitle: "সক্রিয় স্বাস্থ্য ব্যবস্থাপনার জন্য বিজ্ঞান সমর্থিত ডায়াগনস্টিকস টুলস।",
+      feat1Title: "অনুমতিমূলক পূর্বাভাস মডেলিং",
+      feat1Desc: "আমাদের গাণিতিক অ্যালগরিদম জেনেটিক্স, জীবনধারা এবং পরিবেশগত ডাটা সহ ১৫০টিরও বেশি ভেরিয়েবল বিশ্লেষণ করে সম্ভাব্য হৃদরোগের ঝুঁকি পূর্বাভাস দিতে সক্ষম।",
+      feat2Title: "কমিউনিটি স্বাস্থ্য ফোরাম",
+      feat2Desc: "প্রত্যয়িত চিকিৎসকদের দ্বারা স্থানীয় স্বাস্থ্য প্রবণতা এবং সহায়তা গোষ্ঠীগুলিতে যুক্ত হোন।",
+      feat2Count: "আপনার পার্শ্ববর্তী ১২টি সক্রিয় আলোচনা ফোরাম",
+      feat3Title: "ব্যক্তিগতকৃত জীবনধারা পরিকল্পনা",
+      feat3Desc: "আপনার নির্দিষ্ট ঝুঁকি হ্রাস করার উদ্দেশ্যে কাস্টমাইজড পুষ্টি এবং ক্রিয়াকলাপের পরিকল্পনা।",
+      feat4Title: "রিয়েল-টাইম ক্লিনিক ইন্টিগ্রেশন",
+      feat4Desc: "সহজ পরামর্শের জন্য অংশীদার ক্লিনিকগুলোর সাথে সরাসরি আপনার স্বাস্থ্য পরীক্ষার ফল সিঙ্ক করুন।",
+      feat4Action: "নিকটস্থ ক্লিনিক খুঁজুন",
+      stepsTitle: "স্পষ্ট স্বাস্থ্য ধারণায় ৩টি সহজ ধাপ",
+      step1Name: "ডাটা সংগ্রহ",
+      step1Desc: "একটি ৫-মিনিটের স্বাস্থ্য প্রোফাইল পূরণ করুন এবং পরিধানযোগ্য ফিটনেস ব্যান্ড সিঙ্ক করুন।",
+      step2Name: "এআই সংশ্লেষণ",
+      step2Desc: "আমাদের সুরক্ষিত ইঞ্জিন ক্লিনিকাল ট্রায়ালের ডাটাবেসের সাথে তথ্য বিশ্লেষণ ও তুলনা করে।",
+      step3Name: "ঝুঁকি প্রতিবেদন",
+      step3Desc: "জীবনযাত্রার পরিবর্তন সংবলিত একটি অগ্রাধিকারমূলক ঝুঁকি পরিমাপ ড্যাশবোর্ড পান।",
+      alertTitle: "ডেঙ্গু সতর্কতা: অতি ঝুঁকিপূর্ণ এলাকা চিহ্নিত",
+      alertDesc: "আপনার বর্তমান এলাকার স্বাস্থ্য নির্দেশিকা আপডেট করা হয়েছে। সর্বশেষ গাইডলাইন দেখুন।",
+      alertAction: "সচেতনতা আপডেট করুন",
+      faqTitle: "সাধারণ প্রশ্নাবলী",
+      faqQ1: "আমার স্বাস্থ্য সংক্রান্ত তথ্য কি নিরাপদ?",
+      faqA1: "আমরা এইএস-২৫৬ এনক্রিপশন ব্যবহার করি এবং সম্পূর্ণ হিপা (HIPAA) ও জিডিপিআর কমপ্লায়েন্ট। আপনার তথ্য সম্পূর্ণ আপনার; আমরা কখনো তা বিক্রয় করি না।",
+      faqQ2: "কতটা নির্ভুলভাবে পূর্বাভাস দেওয়া যায়?",
+      faqA2: "আমাদের ক্লিনিক্যাল ট্রায়ালের ভিত্তিতে ৯২% পর্যন্ত সার্থকতা ধরে রাখা সম্ভব। তবে, এটি কেবল সচেতনতার জন্য এবং চিকিৎসকের সরাসরি প্রতিস্থাপন নয়।",
+      faqQ3: "আমি কি অ্যাপল ওয়াচের সাথে সিঙ্ক করতে পারি?",
+      faqA3: "হ্যাঁ, ভাইটালকেয়ার অ্যাপল হেলথ, গুগল ফিট এবং গারমিন ডিভাইসের সাথে সিঙ্ক করা সমর্থন করে।",
+      ctaTitle: "আজই আপনার দীর্ঘমেয়াদী স্বাস্থ্যঝুঁকি মুক্ত যাত্রা শুরু করুন।",
+      ctaDesc: "ভাইটালকেয়ার ক্লিনিকাল রাডার প্রযুক্তি ব্যবহার করে নিজের ভবিষ্যৎ সুস্থ জীবন নিয়ন্ত্রণকারী হাজারো মানুষের সাথে যোগ দিন।",
+      ctaBtn: "ফ্রি হেলথ প্রোফাইল তৈরি করুন",
+      outcomes: "রোগী ও বিশেষজ্ঞের অভিজ্ঞতা",
+      quote1: "ভাইটালকেয়ার কোনো লক্ষণ প্রকাশের তিন মাস আগেই উচ্চ রক্তচাপের ঝুঁকি চিহ্নিত করেছিল। এই আগাম প্রতিরোধ পরিকল্পনা আমার জীবনকে সুস্থ রেখেছে।",
+      user1: "আহমেদ খান",
+      user1Desc: "সক্রিয় ব্যবহারকারী, ৪২",
+      quote2: "একজন কার্ডিওলজিস্ট হিসেবে রোগীদের এই গুরুত্বপূর্ণ চার্ট এবং ঝুঁকি ডাটা হাতে নিয়ে আসতে দেখলে আমার রোগ নির্ণয় ১০ গুণ সহজ ও ডাটা-চালিত হয়ে যায়।",
+      user2: "ডা. সারাহ পারভেজ",
+      user2Desc: "হৃদরোগ বিশেষজ্ঞ",
+    }
+  };
+
+  const currentT = t[lang];
+
   return (
-    <div className="flex flex-col min-h-screen bg-neutral-50 text-neutral-800 font-sans selection:bg-teal-700 selection:text-white pb-16 md:pb-0">
-      {/* Header element conforming to xpaths */}
-      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-neutral-200/50 py-4 px-6 md:px-12 flex justify-between items-center max-w-7xl mx-auto w-full">
-        <div className="flex items-center gap-2.5 text-teal-800">
-          <HeartPulse className="w-8 h-8 text-teal-700 animate-pulse" />
-          <span className="text-2xl font-bold tracking-tight text-teal-800">VitalsCare</span>
+    <div className="min-h-screen text-on-surface bg-background transition-colors duration-200">
+      
+      {/* Hero Section */}
+      <section className="relative min-h-[700px] flex items-center pt-8 pb-16 overflow-hidden">
+        <div className="absolute inset-0 z-0">
+          <div className="absolute inset-0 bg-gradient-to-r from-surface-container-low/50 via-transparent to-transparent"></div>
         </div>
         
-        {/* Navigation block containing anchors matching xpath selection */}
-        <nav className="hidden md:flex items-center gap-8">
-          <a 
-            href="#" 
-            className="text-teal-900 font-semibold px-3 py-1.5 rounded-full bg-teal-50 transition-colors"
-            onClick={(e) => { e.preventDefault(); onNavigate('landing', 'none'); }}
-          >
-            Home
-          </a>
-          <a 
-            href="#" 
-            className="text-neutral-600 hover:text-teal-700 transition-colors px-3 py-1.5 rounded-full hover:bg-neutral-100"
-            onClick={(e) => { e.preventDefault(); onNavigate('assessment', 'none'); }}
-          >
-            Assess
-          </a>
-          <a 
-            href="#" 
-            className="text-neutral-600 hover:text-teal-700 transition-colors px-3 py-1.5 rounded-full hover:bg-neutral-100"
-            onClick={(e) => { e.preventDefault(); onNavigate('dashboard', 'none'); }}
-          >
-            Insights
-          </a>
-        </nav>
-
-            <div className="hidden md:flex items-center gap-4">
-              <button 
-                onClick={() => onNavigate('assessment', 'push')}
-                className="bg-teal-600 text-white font-medium hover:bg-teal-700 tracking-tight transition-all duration-200 px-6 py-2.5 rounded-full soft-shadow hover:-translate-y-0.5"
-              >
-                Check Risks
-              </button>
-              <div onClick={() => onProfileClick?.()} className="flex items-center bg-teal-50 text-teal-800 p-2 rounded-full cursor-pointer hover:bg-teal-100 transition-all" title={profileName} aria-label={`Profile: ${profileName}`}>
-                <span className="text-xs font-semibold px-2">{profileInitials}</span>
-              </div>
-            </div>
-      </header>
-
-      {/* Hero Section */}
-      <section className="relative px-6 md:px-12 max-w-7xl mx-auto w-full py-12 md:py-24 grid md:grid-cols-2 gap-12 items-center">
-        {/* Glowing background circles */}
-        <div className="absolute top-10 right-10 w-80 h-80 bg-teal-200 rounded-full filter blur-3xl opacity-30 animate-pulse pointer-events-none"></div>
-        <div className="absolute bottom-10 left-10 w-64 h-64 bg-emerald-200 rounded-full filter blur-3xl opacity-35 animate-pulse pointer-events-none" style={{ animationDelay: '2s' }}></div>
-
-        <div className="flex flex-col gap-6 relative z-10 leading-normal">
-          <div>
-            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-teal-50 text-teal-800 text-xs font-semibold mb-4 tracking-wide border border-teal-100">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
-              Trusted in Bangladesh
+        <div className="max-w-7xl mx-auto px-4 md:px-8 relative z-10 w-full">
+          <div className="max-w-3xl">
+            <span className="inline-block px-3 py-1 bg-primary-container text-on-primary-container font-semibold rounded-full text-xs tracking-wider mb-6 uppercase">
+              {currentT.tag}
             </span>
-            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-neutral-900 leading-tight">
-              Early Risk Detection for a Healthier Tomorrow
-            </h1>
-            <p className="text-lg text-neutral-600 mt-5 md:max-w-lg leading-relaxed">
-              Empowering individuals with proactive health insights. Our platform uses advanced analytics to identify potential health risks before they become critical, guiding you towards better preventive care.
+            <h2 className="text-4xl md:text-6xl font-bold tracking-tight text-on-surface mb-6 leading-tight">
+              {currentT.heroTitle}
+            </h2>
+            <p className="text-lg md:text-xl text-on-surface-variant mb-8 max-w-xl leading-relaxed">
+              {currentT.heroDesc}
             </p>
-          </div>
-
-          <div className="flex flex-col sm:flex-row gap-4 mt-2">
-            {/* Button conforming to exact Landing Page xpath 1 */}
-            <button 
-              id="start-assessment-btn-top"
-              onClick={() => onNavigate('assessment', 'push')}
-              className="bg-teal-700 text-white px-6 py-3 sm:px-8 sm:py-4 rounded-full font-semibold flex items-center justify-center gap-2 hover:bg-teal-800 transition-all duration-200 soft-shadow hover:scale-[1.01]"
-            >
-              Start Assessment
-              <ArrowRight className="w-5 h-5" />
-            </button>
-
-            <a 
-              href="#why-it-matters"
-              className="bg-white text-teal-800 border border-neutral-200 hover:border-neutral-300 px-6 py-3 sm:px-8 sm:py-4 rounded-full font-semibold flex items-center justify-center gap-2 hover:bg-neutral-50 transition-all duration-200 text-center"
-            >
-              Learn More
-            </a>
-          </div>
-        </div>
-
-        {/* Interactive mockup preview container */}
-        <div className="relative mt-6 md:mt-0 glass-card rounded-[2.5rem] p-4 soft-shadow">
-          <img 
-            alt="Healthcare professional reviewing analytics on a tablet" 
-            className="rounded-[2rem] w-full object-cover h-64 md:h-[450px] lg:h-[520px]" 
-            referrerPolicy="no-referrer"
-            src="https://lh3.googleusercontent.com/aida-public/AB6AXuAuZF0xiorCdUXsEho6A9KM80sGIeAK_SVKIwxWGOge1MlExQjKS_Cj8ZG6rPzBen22yyvKg8DCkLxIDY3_lHlyrBDkCfisVne7jOkltbiPLHF7mDkdPm3czuDZVjaoX12y2_p58sATVPn7NJCx9Oo17iC9cFUUnzgcATTkBp8nuxy4q6JCrA8bnU6jNEhifdqr-CPGMZb3d6b6Ru40CrHCT8e0u89VliXdYlZaBJM0Sq5C46GJrpCE2axGyf7y0XyUUe_cmgjRL6c" 
-          />
-          {/* Floating badge */}
-          <div className="absolute -bottom-4 left-6 md:-left-6 glass-card p-4 rounded-2xl soft-shadow flex items-center gap-3 border-l-4 border-emerald-500 animate-bounce" style={{ animationDuration: '4s' }}>
-            <div className="bg-emerald-100 text-emerald-800 p-2.5 rounded-full">
-              <TrendingDown className="w-5 h-5" />
-            </div>
-            <div>
-              <p className="text-xs text-neutral-500 font-medium">Risk Reduction</p>
-              <p className="text-xl font-bold text-neutral-900">30%</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Bento Grid: Why Health Early Detection Matters in Bangladesh */}
-      <section id="why-it-matters" className="py-20 px-6 md:px-12 max-w-7xl mx-auto w-full scroll-mt-20">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl font-bold text-neutral-900 tracking-tight">
-            Why Early Detection Matters in Bangladesh
-          </h2>
-          <p className="text-neutral-600 mt-4 max-w-2xl mx-auto leading-relaxed">
-            Non-communicable diseases are rising rapidly. Preventive screening is the most effective way to manage health outcomes and reduce long-term medical burdens.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
-          {/* Card 1: Rising NCD crisis */}
-          <div className="glass-card soft-shadow rounded-2xl p-8 md:col-span-2 flex flex-col justify-between">
-            <div className="flex justify-between items-start mb-6">
-              <div>
-                <h3 className="text-xl font-bold text-neutral-900">Rising NCD Crisis</h3>
-                <p className="text-sm text-neutral-600 mt-2 max-w-lg leading-relaxed">
-                  Over 67% of total deaths in Bangladesh are currently attributed to Non-Communicable Diseases (NCDs) like cardiovascular issues and diabetes.
-                </p>
-              </div>
-              <div className="bg-red-50 text-red-600 p-3 rounded-full">
-                <ShieldAlert className="w-7 h-7" />
-              </div>
+            
+            <div className="flex flex-col sm:flex-row gap-4 mb-12">
+              <button 
+                id="btn-landing-assess"
+                onClick={() => onNavigate("assess")}
+                className="bg-primary text-on-primary hover:bg-opacity-90 px-8 py-4 rounded-xl font-bold transition-all shadow-lg active:scale-95 text-center flex items-center justify-center gap-2"
+              >
+                {currentT.btnCheck} <ArrowRight className="w-5 h-5" />
+              </button>
+              <button 
+                id="btn-landing-dashboard"
+                onClick={() => onNavigate("dashboard")}
+                className="border border-primary text-primary hover:bg-primary-container/10 px-8 py-4 rounded-xl font-bold transition-all active:scale-95 text-center"
+              >
+                {currentT.btnRadar}
+              </button>
             </div>
             
-            <div className="mt-4">
-              <div className="w-full h-3.5 bg-neutral-200/70 rounded-full overflow-hidden">
-                <div className="h-full bg-red-600 rounded-full" style={{ width: '67%' }}></div>
+            <div className="flex items-center gap-4 text-on-surface-variant">
+              <div className="flex -space-x-3">
+                <div className="w-10 h-10 rounded-full border-2 border-surface bg-surface-dim overflow-hidden">
+                  <img 
+                    alt="Doctor 1" 
+                    className="w-full h-full object-cover"
+                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuBvaxSPCVyuVl8lerLZWuxIg_RSYgpye24-jH1ZACp7IaGlRHpKsz7H39vTtrW4GFT9cO6qFOlk2G57Tlk6q_gqAh1_E5hTEPvvHQRp92LPyvFbXJwb12O8CgNm2ufOJ9ZVgkV6x0ipaEHElM4Pd-2K2qqUYwqIbjsRNKIL87REtXGgAfgWNsfBxXvZrEdVYHioPvzvk_u767LTt8yqJkP1YvqNzAUVp0nSuaKlNPK9oO1q0T2pKwnzLoEsNkdKzdiUysz3Q-pR4Q-Y"
+                  />
+                </div>
+                <div className="w-10 h-10 rounded-full border-2 border-surface bg-surface-dim overflow-hidden">
+                  <img 
+                    alt="Doctor 2" 
+                    className="w-full h-full object-cover"
+                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuA8-Sv9_CeD_K2wqSA8cQ4Br56ETwYV9PbuYqFHejEYkWbSLxGXCC-e6P6riE0PWnBhh6PveQe0FeLMlNSJbpCPToYIyRIPWrHrKPgz4bXmZ44GRIl7IQj0Zb7UMMdUN4aC7RzIfRiEASavo4LOgnNkOno11ysmpRvIAdgcMajbojbppJiu2fQQQzNAlxZrBxOD0X4qcOYxdKJRrkIEYyBcVEQXDxjBCJm0fUtUqpTHJBz13juHnt1EMoIoj4Z6ylgghUi0QRSaJpyN"
+                  />
+                </div>
               </div>
-              <p className="text-xs font-semibold text-neutral-500 mt-2 text-right">
-                67% Cardiovascular & Diabetes Mortality Rate
-              </p>
-            </div>
-          </div>
-
-          {/* Card 2: Small status card */}
-          <div className="glass-card soft-shadow rounded-2xl p-8 flex flex-col items-center justify-center text-center">
-            <div className="bg-teal-50 text-teal-800 p-4 rounded-full mb-4">
-              <Users className="w-8 h-8" />
-            </div>
-            <h3 className="text-3xl font-extrabold text-neutral-900">1 in 4</h3>
-            <p className="text-sm text-neutral-500 mt-2 font-medium">
-              Adults affected by hypertension across Bangladesh
-            </p>
-          </div>
-
-          {/* Card 3: Prevention Cost cost card */}
-          <div className="glass-card soft-shadow rounded-2xl p-8 flex flex-col justify-between">
-            <div>
-              <div className="inline-flex p-3 rounded-xl bg-teal-50 text-teal-800 mb-4">
-                <Activity className="w-6 h-6" />
-              </div>
-              <h3 className="text-lg font-bold text-neutral-900">Prevention Cost</h3>
-              <p className="text-sm text-neutral-600 mt-2 leading-relaxed">
-                Preventive care costs a fraction of reactive treatments, saving families significant financial stress and preventing chronic damage.
-              </p>
-            </div>
-            <div className="text-xs text-teal-800 font-semibold bg-teal-50/50 py-1 px-3.5 rounded-full inline-block mt-4 w-fit">
-              ★ Active Savings
-            </div>
-          </div>
-
-          {/* Card 4: Cozy doctor image banner card */}
-          <div className="glass-card soft-shadow rounded-2xl overflow-hidden md:col-span-2 relative h-64 md:h-auto min-h-[250px]">
-            <img 
-              alt="Doctor consulting with a patient in a modern clinic" 
-              className="absolute inset-0 w-full h-full object-cover opacity-90 transition-transform duration-500 hover:scale-105" 
-              referrerPolicy="no-referrer"
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuAtgeMGwS3gu4swpa0YXpipM7eqBy7PLIH_uoQ3lTxgCPYrRzXExHUWPUlM-0hKPDmdTTpHg4MFJstnOGP2v49K4F02dsaTPtJlmSHHBUCHDOe6EE0pajSspTmnwSnqG6ASf8sAdZ3vgppebb9hXYvBVATgNt9ylXsd6sTQAdOTiGdAJwblmkCRZ_cTjrK_36Na0RR0nWU8ilir3sKdhCX33HzoT1JzbmlPRzY3dH8wi4QUbVohtyz5i1pN0j2E6Ie1SCihrZ0XvqY" 
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/75 to-transparent"></div>
-            <div className="absolute bottom-6 left-6 right-6 text-white">
-              <h4 className="text-xl font-bold">Shifting the Paradigm</h4>
-              <p className="text-sm text-white/90 mt-1">From reactive treatment to proactive wellness management.</p>
+              <p className="text-sm font-semibold">{currentT.trusted}</p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Core Capabilities Section */}
-      <section id="features" className="py-20 bg-teal-900/5 border-y border-teal-800/10">
-        <div className="max-w-7xl mx-auto px-6 md:px-12 w-full">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-neutral-950 tracking-tight">Core Capabilities</h2>
-            <p className="text-neutral-600 mt-4 max-w-2xl mx-auto leading-relaxed">
-              Designed to integrate seamlessly into your life, providing actionable insights without overwhelming medical jargon.
-            </p>
+      {/* Precision Diagnostics Features Section */}
+      <section className="py-16 bg-surface-container-low border-y border-outline-variant/30">
+        <div className="max-w-7xl mx-auto px-4 md:px-8">
+          <div className="text-center mb-12">
+            <h3 className="text-3xl font-bold tracking-tight mb-2 text-on-surface">
+              {currentT.diagTitle}
+            </h3>
+            <p className="text-on-surface-variant">{currentT.diagSubtitle}</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* Smart Tracking */}
-            <div className="glass-card hover:-translate-y-1 duration-350 transition-all p-8 rounded-2xl soft-shadow bg-white/90">
-              <div className="w-12 h-12 rounded-xl bg-teal-100 text-teal-800 flex items-center justify-center mb-6">
-                <TrendingDown className="w-6 h-6" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            
+            {/* Feature 1 */}
+            <div className="md:col-span-2 bg-surface-container-lowest border border-outline-variant/40 hover:border-primary/50 p-8 rounded-2xl transition-all duration-300 shadow-sm flex flex-col justify-between">
+              <div>
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-orange-100 dark:bg-orange-950/40 text-orange-600 mb-6">
+                  <Activity className="w-6 h-6" />
+                </div>
+                <h4 className="text-xl font-bold mb-3 text-on-surface">{currentT.feat1Title}</h4>
+                <p className="text-on-surface-variant max-w-xl leading-relaxed">{currentT.feat1Desc}</p>
               </div>
-              <h3 className="text-lg font-bold text-neutral-900 mb-2">Smart Tracking</h3>
-              <p className="text-sm text-neutral-600 leading-relaxed">
-                Log vitals easily. Our system identifies subtle trends over time, highlighting deviations from your baseline before they become symptoms.
-              </p>
             </div>
 
-            {/* Personalized Advice */}
-            <div className="glass-card hover:-translate-y-1 duration-350 transition-all p-8 rounded-2xl soft-shadow bg-white/90">
-              <div className="w-12 h-12 rounded-xl bg-teal-100 text-teal-800 flex items-center justify-center mb-6">
-                <Heart className="w-6 h-6" />
+            {/* Feature 2: High intensity block */}
+            <div onClick={() => onNavigate("assess")} className="cursor-pointer bg-primary text-on-primary p-8 rounded-2xl flex flex-col justify-between hover:shadow-xl hover:scale-[1.01] transition-all duration-300">
+              <div>
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-teal-500/20 text-on-primary mb-6">
+                  <Users className="w-6 h-6" />
+                </div>
+                <h4 className="text-xl font-bold mb-3">{currentT.feat2Title}</h4>
+                <p className="opacity-90 text-sm leading-relaxed">{currentT.feat2Desc}</p>
               </div>
-              <h3 className="text-lg font-bold text-neutral-900 mb-2">Personalized Advice</h3>
-              <p className="text-sm text-neutral-600 leading-relaxed">
-                Receive tailored lifestyle and dietary recommendations based on your specific risk profile and Bangladeshi demographic data.
-              </p>
+              <div className="mt-8 flex items-center justify-between border-t border-white/20 pt-4">
+                <span className="text-xs font-semibold">{currentT.feat2Count}</span>
+                <ChevronRight className="w-5 h-5" />
+              </div>
             </div>
 
-            {/* Privacy First */}
-            <div className="glass-card hover:-translate-y-1 duration-350 transition-all p-8 rounded-2xl soft-shadow bg-white/90">
-              <div className="w-12 h-12 rounded-xl bg-teal-100 text-teal-800 flex items-center justify-center mb-6">
-                <ShieldCheck className="w-6 h-6" />
+            {/* Feature 3 */}
+            <div className="bg-surface-container-lowest border border-outline-variant/40 hover:border-primary/50 p-8 rounded-2xl flex flex-col justify-between shadow-sm">
+              <div>
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-100 dark:bg-emerald-950/40 text-emerald-600 mb-6">
+                  <FileText className="w-6 h-6" />
+                </div>
+                <h4 className="text-xl font-bold mb-3 text-on-surface">{currentT.feat3Title}</h4>
+                <p className="text-on-surface-variant text-sm leading-relaxed">{currentT.feat3Desc}</p>
               </div>
-              <h3 className="text-lg font-bold text-neutral-900 mb-2">Privacy First</h3>
-              <p className="text-sm text-neutral-600 leading-relaxed">
-                Your health data is encrypted end-to-end. We adhere to strict data protection standards to ensure your personal information remains confidential.
-              </p>
             </div>
+
+            {/* Feature 4 */}
+            <div className="md:col-span-2 bg-surface-container-lowest border border-outline-variant/40 hover:border-primary/50 p-8 rounded-2xl grid grid-cols-1 md:grid-cols-2 gap-6 items-center shadow-sm">
+              <div className="flex flex-col h-full justify-between py-2">
+                <div>
+                  <h4 className="text-xl font-bold mb-3 text-on-surface">{currentT.feat4Title}</h4>
+                  <p className="text-on-surface-variant text-sm leading-relaxed mb-6">{currentT.feat4Desc}</p>
+                </div>
+                <button 
+                  onClick={() => onNavigate("dashboard")}
+                  className="text-primary font-bold text-sm flex items-center gap-1.5 hover:underline text-left"
+                >
+                  {currentT.feat4Action} <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+              
+              <div className="h-44 rounded-xl overflow-hidden border border-outline-variant bg-surface-dim relative">
+                <img 
+                  alt="Map location" 
+                  className="w-full h-full object-cover brightness-95 opacity-80" 
+                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuCWk3kfwcViSbhlmzvY_FtLNpujo5ALT9G6NtHUCvzmTTW3T3Pi1qYUrK6ZDH76Medgj4a_JMgrXDfQT-hqht-wZYngD6ae5WxmkQs1iNTtARF1-uahTI5FClFj7H-G89hW1NMMhNIickExm3b8jWifXuGXcst5KxfbzgnuO3SVdiptgrM0YtrV21WmWsjMmoVkCrgVLsyUGtRRRezXXXw_2hFKNQSzBObXb-LQ-cbNfOhaFql2eDJ-zvppsTCBwE1SO6SXTXWg4j6e"
+                />
+                <div className="absolute inset-0 bg-primary/10 flex items-center justify-center">
+                  <span className="bg-surface text-primary px-4 py-2 rounded-full font-bold text-xs shadow hover:scale-105 duration-200">
+                    {currentT.feat4Action}
+                  </span>
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
       </section>
 
-      {/* CTA Footer Wrapper */}
-      <section className="py-24 px-6 md:px-12 text-center">
-        <div className="max-w-3xl mx-auto glass-card p-8 md:p-12 rounded-[2rem] soft-shadow bg-gradient-to-br from-white to-teal-50">
-          <h2 className="text-2xl md:text-3xl font-extrabold text-neutral-900 mb-4 select-none">
-            Take Control of Your Health Today
-          </h2>
-          <p className="text-sm md:text-md text-neutral-600 mb-8 max-w-xl mx-auto leading-relaxed">
-            Join thousands of others in Bangladesh who are prioritizing proactive wellness. The assessment takes less than 5 minutes.
-          </p>
+      {/* How it Works section */}
+      <section className="py-20 bg-secondary-container/30 text-on-secondary-container">
+        <div className="max-w-7xl mx-auto px-4 md:px-8">
+          <h3 className="text-3xl font-bold text-center mb-16 text-on-secondary-container">
+            {currentT.stepsTitle}
+          </h3>
           
-          {/* Button conforming to exact Landing Page xpath 2 */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-12 relative">
+            <div className="hidden md:block absolute top-8 left-16 right-16 h-[2px] bg-secondary/20 z-0"></div>
+            
+            <div className="relative z-10 flex flex-col items-center text-center">
+              <div className="w-16 h-16 rounded-full bg-primary text-on-primary flex items-center justify-center font-bold text-2xl mb-6 shadow-md">
+                1
+              </div>
+              <h4 className="text-xl font-bold mb-3">{currentT.step1Name}</h4>
+              <p className="text-on-surface-variant max-w-xs">{currentT.step1Desc}</p>
+            </div>
+
+            <div className="relative z-10 flex flex-col items-center text-center">
+              <div className="w-16 h-16 rounded-full bg-primary text-on-primary flex items-center justify-center font-bold text-2xl mb-6 shadow-md">
+                2
+              </div>
+              <h4 className="text-xl font-bold mb-3">{currentT.step2Name}</h4>
+              <p className="text-on-surface-variant max-w-xs">{currentT.step2Desc}</p>
+            </div>
+
+            <div className="relative z-10 flex flex-col items-center text-center">
+              <div className="w-16 h-16 rounded-full bg-primary text-on-primary flex items-center justify-center font-bold text-2xl mb-6 shadow-md">
+                3
+              </div>
+              <h4 className="text-xl font-bold mb-3">{currentT.step3Name}</h4>
+              <p className="text-on-surface-variant max-w-xs">{currentT.step3Desc}</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Awareness Emergency Danger Banner */}
+      <section className="py-6 bg-error text-on-error relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 md:px-8 flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
+          <div className="flex items-center gap-4 text-center md:text-left">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/20 text-on-error shrink-0 animate-pulse">
+              <Shield className="w-6 h-6" />
+            </div>
+            <div>
+              <p className="text-lg font-bold">{currentT.alertTitle}</p>
+              <p className="opacity-95 text-sm mt-1">{currentT.alertDesc}</p>
+            </div>
+          </div>
           <button 
-            id="start-assessment-btn-cta"
-            onClick={() => onNavigate('assessment', 'push')}
-            className="bg-teal-700 hover:bg-teal-800 text-white font-semibold px-10 py-4 rounded-full inline-flex items-center gap-2 transform transition-all duration-200 hover:scale-[1.01] soft-shadow"
+            onClick={() => onNavigate("assess")} 
+            className="bg-white text-error font-bold px-6 py-3 rounded-full hover:bg-white/90 active:scale-95 transition-all text-sm shrink-0"
           >
-            Start Free Assessment
-            <ArrowRight className="w-5 h-5" />
+            {currentT.alertAction}
           </button>
         </div>
       </section>
 
-      {/* Navigation block (Mobile bottom nav conforming to xpath) wrapped inside a nav selector */}
-      <nav className="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-3 md:hidden bg-white/90 backdrop-blur-md border-t border-neutral-200/80 rounded-t-2xl shadow-[0_-10px_35px_rgba(0,0,0,0.06)] safe-bottom">
-        <a 
-          href="#" 
-          className="flex flex-col items-center justify-center text-teal-800 bg-teal-50/80 px-4 py-1.5 rounded-full transition-transform"
-          onClick={(e) => { e.preventDefault(); onNavigate('landing', 'none'); }}
-        >
-          <Home className="w-5 h-5" />
-          <span className="text-[10px] font-bold mt-1">Home</span>
-        </a>
-        <a 
-          href="#" 
-          className="flex flex-col items-center justify-center text-neutral-500 hover:text-teal-700 transition-colors"
-          onClick={(e) => { e.preventDefault(); onNavigate('assessment', 'none'); }}
-        >
-          <Activity className="w-5 h-5" />
-          <span className="text-[10px] font-semibold mt-1">Assess</span>
-        </a>
-        <a 
-          href="#" 
-          className="flex flex-col items-center justify-center text-neutral-500 hover:text-teal-700 transition-colors"
-          onClick={(e) => { e.preventDefault(); onNavigate('dashboard', 'none'); }}
-        >
-          <TrendingDown className="w-5 h-5" />
-          <span className="text-[10px] font-semibold mt-1">Insights</span>
-        </a>
-            <div 
-              onClick={() => onProfileClick?.()} 
-              className="flex flex-col items-center justify-center text-neutral-600 hover:text-teal-700 cursor-pointer"
-            >
-              <div className="w-5.5 h-5.5 rounded-full bg-neutral-200 border border-neutral-300 flex items-center justify-center font-bold text-[9px] text-neutral-600">
-                {profileInitials}
+      {/* Patient Outcomes & Testimonials / FAQ Screen */}
+      <section className="py-20 bg-background">
+        <div className="max-w-7xl mx-auto px-4 md:px-8 grid grid-cols-1 lg:grid-cols-2 gap-12">
+          
+          {/* Patient outcomes testimonials */}
+          <div className="flex flex-col gap-6">
+            <h3 className="text-3xl font-bold text-on-surface mb-4">{currentT.outcomes}</h3>
+            
+            <div className="p-6 bg-surface-container border border-outline-variant/30 rounded-2xl relative flex flex-col justify-between min-h-[160px] shadow-sm">
+              <p className="italic text-on-surface-variant mb-6 pl-4 border-l-2 border-primary">
+                "{currentT.quote1}"
+              </p>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center font-bold text-on-secondary-container">
+                  AK
+                </div>
+                <div>
+                  <p className="font-bold text-on-surface text-sm">{currentT.user1}</p>
+                  <p className="text-xs text-on-surface-variant">{currentT.user1Desc}</p>
+                </div>
               </div>
-              <span className="text-[10px] font-semibold mt-1">Profile</span>
             </div>
-      </nav>
 
-      {/* Footer conform layout */}
-      <footer className="bg-white py-12 px-6 md:px-12 border-t border-neutral-200/50 mt-auto select-none">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-          <div>
-            <span className="text-xl font-bold text-teal-900">VitalsCare</span>
-            <p className="text-xs text-neutral-500 mt-2 max-w-lg leading-relaxed">
-              © 2024 VitalsCare Bangladesh. All rights reserved. <br/>
-              <span className="text-red-600 font-semibold">Disclaimer:</span> This tool provides preventive screening only and is not a medical diagnosis. Not a substitute for professional medical advice.
-            </p>
+            <div className="p-6 bg-surface-container border border-outline-variant/30 rounded-2xl relative flex flex-col justify-between min-h-[160px] shadow-sm">
+              <p className="italic text-on-surface-variant mb-6 pl-4 border-l-2 border-primary">
+                "{currentT.quote2}"
+              </p>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center font-bold text-on-primary-container">
+                  SP
+                </div>
+                <div>
+                  <p className="font-bold text-on-surface text-sm">{currentT.user2}</p>
+                  <p className="text-xs text-on-surface-variant">{currentT.user2Desc}</p>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <div className="flex flex-wrap gap-5">
-            <span className="text-xs text-neutral-400 hover:text-teal-800 cursor-not-allowed">Privacy Policy</span>
-            <span className="text-xs text-neutral-400 hover:text-teal-800 cursor-not-allowed">Terms of Service</span>
-            <span className="text-xs text-neutral-400 hover:text-teal-800 cursor-not-allowed">Contact Support</span>
-            <span className="text-xs text-neutral-400 hover:text-teal-800 cursor-not-allowed">About Us</span>
+          {/* FAQ panel toggle layout */}
+          <div className="flex flex-col gap-6">
+            <h3 className="text-3xl font-bold text-on-surface mb-4">{currentT.faqTitle}</h3>
+            <div className="space-y-4">
+              
+              <details className="group bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-5 cursor-pointer hover:bg-surface-container transition-colors shadow-sm" open>
+                <summary className="font-bold flex justify-between items-center list-none text-on-surface">
+                  <span>{currentT.faqQ1}</span>
+                  <HelpCircle className="w-5 h-5 text-primary group-open:rotate-180 duration-200 transition-transform" />
+                </summary>
+                <p className="mt-3 text-sm text-on-surface-variant leading-relaxed">
+                  {currentT.faqA1}
+                </p>
+              </details>
+
+              <details className="group bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-5 cursor-pointer hover:bg-surface-container transition-colors shadow-sm">
+                <summary className="font-bold flex justify-between items-center list-none text-on-surface">
+                  <span>{currentT.faqQ2}</span>
+                  <HelpCircle className="w-5 h-5 text-primary group-open:rotate-180 duration-200 transition-transform" />
+                </summary>
+                <p className="mt-3 text-sm text-on-surface-variant leading-relaxed">
+                  {currentT.faqA2}
+                </p>
+              </details>
+
+              <details className="group bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-5 cursor-pointer hover:bg-surface-container transition-colors shadow-sm">
+                <summary className="font-bold flex justify-between items-center list-none text-on-surface">
+                  <span>{currentT.faqQ3}</span>
+                  <HelpCircle className="w-5 h-5 text-primary group-open:rotate-180 duration-200 transition-transform" />
+                </summary>
+                <p className="mt-3 text-sm text-on-surface-variant leading-relaxed">
+                  {currentT.faqA3}
+                </p>
+              </details>
+
+            </div>
           </div>
         </div>
-      </footer>
+      </section>
+
+      {/* Final Section CTAs */}
+      <section className="py-24 bg-inverse-surface text-inverse-on-surface relative">
+        <div className="max-w-4xl mx-auto px-4 md:px-8 text-center">
+          <h2 className="text-3xl md:text-5xl font-bold tracking-tight mb-6 leading-tight">
+            {currentT.ctaTitle}
+          </h2>
+          <p className="text-lg opacity-85 max-w-2xl mx-auto mb-10 leading-relaxed">
+            {currentT.ctaDesc}
+          </p>
+          <button 
+            id="btn-landing-profile"
+            onClick={() => onNavigate("assess")}
+            className="bg-primary hover:bg-opacity-95 text-on-primary px-10 py-5 rounded-full font-bold transition-all shadow-2xl hover:scale-105 active:scale-95 text-lg"
+          >
+            {currentT.ctaBtn}
+          </button>
+        </div>
+      </section>
+
     </div>
   );
 }

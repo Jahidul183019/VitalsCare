@@ -137,15 +137,13 @@ def translate_to_bengali_via_gemini(
         print("  ⚠️ No Gemini API key provided for translation.")
         return None
         
-    # Only translate first 2000 chars to save time
-    short_text = text[:2000]
-
+    # Pass the full text instead of truncating to 2000 chars
     prompt = f"""Translate the following WHO {disease} health guidelines into Bengali (বাংলা).
 Keep medical terms accurate. Use simple Bengali for rural health workers.
 Only output the Bengali translation, nothing else.
 
 Text to translate:
-{short_text}"""
+{text}"""
 
     try:
         url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key={gemini_api_key}"
@@ -409,10 +407,12 @@ if __name__ == "__main__":
     print("🏥 VitalsCare WHO Data Scraper")
     print("=" * 40)
 
+    gemini_key = os.getenv("GEMINI_API_KEY", "").strip()
+
     results = scrape_all_who_data(
         data_dir=data_dir,
         use_gemini_translation=True,
-        gemini_api_key="",
+        gemini_api_key=gemini_key,
         force_refresh=True
     )
 

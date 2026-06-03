@@ -21,7 +21,8 @@ from graph_engine import knowledge_graph
 from personalization import personalization
 from gemini_engine import (
     generate_recommendation,
-    check_gemini_running
+    check_gemini_running,
+    chat_with_gemini
 )
 from scraper import scrape_all_who_data, get_scrape_status
 
@@ -390,6 +391,19 @@ async def refresh_who_data(force: bool = False):
         "total": len(results),
         "message": f"Scraped {sum(results.values())}/{len(results)} WHO disease pages"
     }
+
+
+class ChatPayload(BaseModel):
+    messages: list
+    lang: Optional[str] = "en"
+
+@app.post("/chat")
+async def chat_endpoint(payload: ChatPayload):
+    try:
+        response_text = chat_with_gemini(payload.messages, payload.lang)
+        return {"text": response_text}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 def main() -> None:
