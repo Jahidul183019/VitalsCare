@@ -128,11 +128,11 @@ class PatientData(BaseModel):
     lang: str = "en"
 
 @app.get("/health")
-async def health():
-    llm_status = check_gemini_running()
+def health_check():
+    gemini_status = "running" if gemini_engine.check_gemini_running() else "not running"
     return {
         "status": "VitalsCare v3.0 Running",
-        "gemini": "connected" if llm_status else "not running",
+        "gemini": "connected" if gemini_status == "running" else "not running",
         "features": [
             "XGBoost ML",
             "RAG Pipeline",
@@ -142,6 +142,20 @@ async def health():
             "Personalization"
         ]
     }
+
+@app.get("/debug-models")
+def debug_models():
+    import os, requests
+    key = os.environ.get("GEMINI_API_KEY")
+    if not key:
+        return {"error": "No API key on server"}
+    url = f"https://generativelanguage.googleapis.com/v1beta/models?key={key}"
+    resp = requests.get(url)
+    if resp.status_code != 200:
+        return {"error": resp.text, "status": resp.status_code}
+    models = resp.json().get("models", [])
+    return {"flash_models": [m["name"] for m in models if "flash" in m["name"]]}
+
 
 @app.post("/assess")
 async def assess(patient: PatientData):
