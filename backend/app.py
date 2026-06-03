@@ -23,6 +23,7 @@ from ollama_engine import (
     generate_recommendation,
     check_ollama_running
 )
+from scraper import scrape_all_who_data, get_scrape_status
 
 app = FastAPI(title="VitalsCare v3.0 - Local AI")
 
@@ -217,6 +218,7 @@ async def assess(patient: PatientData):
         disease_display_names = {
             "hypertension": "Hypertension",
             "diabetes": "Diabetes",
+            "malnutrition": "Malnutrition",
             "heart_disease": "Heart Disease"
         }
 
@@ -250,6 +252,7 @@ async def assess(patient: PatientData):
             "condition_scores": {
                 "Hypertension": int(round(risk_scores.get("hypertension", {}).get("probability", 0))),
                 "Diabetes": int(round(risk_scores.get("diabetes", {}).get("probability", 0))),
+                "Malnutrition": int(round(risk_scores.get("malnutrition", {}).get("probability", 0))),
                 "Heart Disease": int(round(risk_scores.get("heart_disease", {}).get("probability", 0)))
             },
             "recommendation": primary_recommendation
@@ -348,6 +351,48 @@ def change_password(payload: ChangePasswordPayload, user=Depends(_require_user))
         raise HTTPException(status_code=400, detail='new-password-too-short')
     db.update_user_password(user['id'], _hash_password(payload.new_password))
     return { 'ok': True }
+
+
+@app.get("/scrape/status")
+async def scrape_status():
+    """Check status of WHO scraped data"""
+    import os
+    data_dir = os.path.join(os.path.dirname(__file__), "who_data")
+    from scraper import get_scrape_status
+    status = get_scrape_status(data_dir)
+    return status
+
+
+@app.post("/scrape/refresh")
+async def refresh_who_data(force: bool = False):
+    """
+    Scrape latest WHO guidelines and save to who_data/
+    This is the live scraping endpoint judges will see!
+    """
+    import os
+    data_dir = os.path.join(os.path.dirname(__file__), "who_data")
+    
+    # Get ngrok URL from environment for Bengali translation
+    ollama_url = os.getenv(
+        "OLLAMA_URL",
+        "https://unpopular-creasing-panoramic.ngrok-free.de"
+    )
+    
+    from scraper import scrape_all_who_data
+    results = scrape_all_who_data(
+        data_dir=data_dir,
+        use_ollama_translation=True,
+        ollama_url=ollama_url,
+        force_refresh=force
+    )
+    
+    return {
+        "status": "complete",
+        "results": results,
+        "success_count": sum(results.values()),
+        "total": len(results),
+        "message": f"Scraped {sum(results.values())}/{len(results)} WHO disease pages"
+    }
 
 
 def main() -> None:

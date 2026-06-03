@@ -1,7 +1,14 @@
-ডাব্লুএইচও হাইপারটেনশন নির্দেশিকা (২০২৪)
-- উচ্চ রক্তচাপের নির্ণয় পেশাদার দ্বারা নিশ্চিত করা উচিত।
-- উচ্চ রক্তচাপ রোগীদের অন্তত বছরে একবার রক্তচাপ পরিমাপ করা উচিত।
-- জীবনযাত্রার পরিবর্তনের মধ্যে প্রতিদিন সোডিয়াম গ্রহণ ২ গ্রামের কম করা (প্রায় ৫ গ্রাম লবণ) অন্তর্ভুক্ত।
-- প্রতি সপ্তাহে কমপক্ষে ১৫০ মিনিট মাঝারি-তীব্রতার অ্যারোবিক ব্যায়াম করুন।
-- অ্যালকোহল সেবন সীমিত করুন এবং তামাক ধূমপান সম্পূর্ণরূপে বর্জন করুন।
-- সিস্টোলিক রক্তচাপ >= ১৪০ বা ডায়াস্টোলিক >= ৯০ রোগীদের নিয়মিত ক্লিনিক পর্যালোচনা প্রয়োজন।
+WHO hypertension নির্দেশিকা
+
+WHO Hypertension Fact Sheet
+Source: https://www.who.int/news-room/fact-sheets/detail/hypertension
+Scraped: 2026-06-03
+============================================================
+
+RegionsWHO Regional websitesAfricaAmericasSouth-East AsiaEuropeEastern MediterraneanWestern Pacific
+
+ResourcesFact sheetsFacts in picturesMultimediaPodcastsPublicationsQuestions and answersTools and toolkits
+
+PopularDengueEndometriosisExcessive heatHerpesMental disordersMpox
+
+RegionsAfricaAmericasEuropeEastern Mediterr

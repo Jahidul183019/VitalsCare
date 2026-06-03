@@ -1,7 +1,7 @@
 """XGBoost risk classification models for community health screening.
 
 This module generates a representative synthetic patient training set
-and fits three XGBoost classifiers (for Hypertension, Diabetes, and Heart Disease)
+and fits three XGBoost classifiers (for Hypertension, Diabetes, and Malnutrition)
 on startup. These models are then used to predict risk probabilities.
 """
 from __future__ import annotations
@@ -36,10 +36,16 @@ def _generate_synthetic_data(n_samples: int = 1000) -> tuple[np.ndarray, dict[st
     stress_level = np.random.choice([0, 1, 2], p=[0.2, 0.6, 0.2], size=n_samples)
     # salt_intake: low=0, medium=1, high=2
     salt_intake = np.random.choice([0, 1, 2], p=[0.2, 0.5, 0.3], size=n_samples)
+    
+    # New Malnutrition Features
+    dietary_diversity = np.random.uniform(0.0, 10.0, size=n_samples)
+    income_level = np.random.choice([0, 1, 2], p=[0.4, 0.4, 0.2], size=n_samples)
+    children_under5 = np.random.randint(0, 5, size=n_samples)
 
     X = np.column_stack([
         age, systolic_bp, diastolic_bp, bmi, family_history,
-        activity_level, diet_quality, smoking, stress_level, salt_intake
+        activity_level, diet_quality, smoking, stress_level, salt_intake,
+        dietary_diversity, income_level, children_under5
     ])
 
     # 1. Hypertension risk heuristics
@@ -64,7 +70,17 @@ def _generate_synthetic_data(n_samples: int = 1000) -> tuple[np.ndarray, dict[st
     )
     y_diabetes = (db_score > 10).astype(int)
 
-    # 3. Heart Disease risk heuristics
+    # 3. Malnutrition risk heuristics
+    # Lower BMI, lower dietary diversity, lower income, and more children <5 increase risk.
+    mn_score = (
+        np.maximum(0, 20 - bmi) * 2.0 + 
+        (10 - dietary_diversity) * 1.5 + 
+        (2 - income_level) * 5.0 +   
+        children_under5 * 3.0
+    )
+    y_malnutrition = (mn_score > 15).astype(int)
+
+    # 4. Heart Disease risk heuristics
     hd_score = (
         (systolic_bp - 120) * 0.4 + 
         (age - 50) * 0.5 + 
@@ -79,6 +95,7 @@ def _generate_synthetic_data(n_samples: int = 1000) -> tuple[np.ndarray, dict[st
     targets = {
         "hypertension": y_hypertension,
         "diabetes": y_diabetes,
+        "malnutrition": y_malnutrition,
         "heart_disease": y_heart_disease
     }
 
@@ -107,6 +124,7 @@ def _map_patient_to_features(patient: dict) -> np.ndarray:
     diet_map = {"poor": 0, "average": 1, "good": 2}
     stress_map = {"low": 0, "medium": 1, "high": 2}
     salt_map = {"low": 0, "medium": 1, "high": 2}
+    income_map = {"low": 0, "medium": 1, "high": 2}
 
     age = float(patient.get("age", 40))
     systolic_bp = float(patient.get("systolic_bp", 120))
@@ -119,15 +137,20 @@ def _map_patient_to_features(patient: dict) -> np.ndarray:
     smoking = 1.0 if patient.get("smoking") else 0.0
     stress = stress_map.get(str(patient.get("stress_level")).lower(), 1)
     salt = salt_map.get(str(patient.get("salt_intake")).lower(), 1)
+    
+    dietary_diversity = float(patient.get("dietary_diversity", 5.0))
+    income = income_map.get(str(patient.get("income_level")).lower(), 1)
+    children = int(patient.get("children_under5", 0))
 
     return np.array([[
         age, systolic_bp, diastolic_bp, bmi, family_history,
-        activity, diet, smoking, stress, salt
+        activity, diet, smoking, stress, salt,
+        dietary_diversity, income, children
     ]])
 
 
 def predict_risks(patient_data: dict) -> Dict[str, dict]:
-    """Exposes risk probabilities and levels for Hypertension, Diabetes, and Heart Disease."""
+    """Exposes risk probabilities and levels for Hypertension, Diabetes, and Malnutrition."""
     # Ensure models are trained
     if not _models:
         init_models()
@@ -135,7 +158,7 @@ def predict_risks(patient_data: dict) -> Dict[str, dict]:
     features = _map_patient_to_features(patient_data)
     out: Dict[str, dict] = {}
     
-    for disease in ["hypertension", "diabetes", "heart_disease"]:
+    for disease in ["hypertension", "diabetes", "malnutrition", "heart_disease"]:
         model = _models[disease]
         prob = float(model.predict_proba(features)[0][1] * 100)
         
@@ -174,6 +197,15 @@ def predict_risks(patient_data: dict) -> Dict[str, dict]:
                 factors.append({"input": "diet_quality", "points": 15, "reason": "Diets rich in simple starches/sugars"})
             if float(patient_data.get("age", 40)) >= 45:
                 factors.append({"input": "age", "points": 10, "reason": "Increased risk due to aging"})
+        elif disease == "malnutrition":
+            if float(patient_data.get("bmi", 23)) < 18.5:
+                factors.append({"input": "bmi", "points": 30, "reason": "Underweight classification"})
+            if float(patient_data.get("dietary_diversity", 5.0)) < 4.0:
+                factors.append({"input": "dietary_diversity", "points": 25, "reason": "Low dietary diversity score"})
+            if str(patient_data.get("income_level", "medium")).lower() == "low":
+                factors.append({"input": "income_level", "points": 20, "reason": "Economic constraint"})
+            if int(patient_data.get("children_under5", 0)) >= 2:
+                factors.append({"input": "children_under5", "points": 15, "reason": "Household resource dilution"})
         elif disease == "heart_disease":
             if float(patient_data.get("systolic_bp", 120)) >= 140:
                 factors.append({"input": "blood_pressure", "points": 30, "reason": "Stage-2 high blood pressure"})
@@ -205,6 +237,13 @@ def predict_risks(patient_data: dict) -> Dict[str, dict]:
                 rec = "Track fasting blood sugar. Replace sweetened tea and soda with water."
             else:
                 rec = "Keep a balanced, low-sugar diet and exercise 150 minutes per week."
+        elif disease == "malnutrition":
+            if prob >= 70.0:
+                rec = "Urgent nutritional intervention required. Contact community health worker for supplementary feeding."
+            elif prob >= 35.0:
+                rec = "Increase dietary diversity. Incorporate local affordable proteins (eggs, lentils) and fortified foods."
+            else:
+                rec = "Maintain balanced meals utilizing seasonal local produce to preserve dietary diversity."
         elif disease == "heart_disease":
             if prob >= 70.0:
                 rec = "Urgent clinical checkup recommended. Quit smoking immediately, start cardiac-friendly activities, and check cholesterol."

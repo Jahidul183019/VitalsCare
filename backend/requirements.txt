@@ -12,3 +12,4 @@ passlib[bcrypt]
 bcrypt
 gunicorn
 requests
+beautifulsoup4
