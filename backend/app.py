@@ -130,15 +130,15 @@ class PatientData(BaseModel):
 async def health():
     llm_status = check_gemini_running()
     return {
-        "status": "VitalsCare v3.0 Running ✅",
-        "gemini": "connected ✅" if llm_status else "not running ❌",
+        "status": "VitalsCare v3.0 Running",
+        "gemini": "connected" if llm_status else "not running",
         "features": [
-            "XGBoost ML ✅",
-            "RAG Pipeline ✅",
-            "Knowledge Graph ✅",
-            "Gemini Cloud LLM ✅",
-            "Bengali Support ✅",
-            "Personalization ✅"
+            "XGBoost ML",
+            "RAG Pipeline",
+            "Knowledge Graph",
+            "Gemini Cloud LLM",
+            "Bengali Support",
+            "Personalization"
         ]
     }
 
@@ -238,11 +238,11 @@ async def assess(patient: PatientData):
             "graph_insights": graph_insights,
             "personalization": personal_message,
             "pipeline": {
-                "step1": "XGBoost ML ✅",
-                "step2": "RAG + WHO Guidelines ✅",
-                "step3": "Knowledge Graph ✅",
-                "step4": "Gemini Cloud LLM ✅",
-                "step5": "Personalization ✅"
+                "step1": "XGBoost ML",
+                "step2": "RAG + WHO Guidelines",
+                "step3": "Knowledge Graph",
+                "step4": "Gemini Cloud LLM",
+                "step5": "Personalization"
             },
             # Compatibility fields for frontend
             "risk_score": int(round(dominant_data["probability"])),

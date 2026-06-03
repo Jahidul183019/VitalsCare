@@ -107,7 +107,7 @@ def scrape_who_page(url: str, disease: str) -> Optional[str]:
         header += "=" * 60 + "\n\n"
 
         content = header + "\n\n".join(text_parts[:40])  # Top 40 sections
-        print(f"  ✅ Scraped {len(text_parts)} sections for {disease}")
+        print(f"  Scraped {len(text_parts)} sections for {disease}")
         return content
 
     except requests.exceptions.Timeout:
@@ -366,7 +366,7 @@ def scrape_all_who_data(
     with open(metadata_path, "w") as f:
         json.dump(metadata, f, indent=2)
 
-    print(f"\n✅ Scraping complete!")
+    print(f"\nScraping complete!")
     print(f"   Success: {sum(results.values())}/{len(results)} diseases")
     print(f"   Files saved to: {data_dir}")
 
@@ -418,5 +418,5 @@ if __name__ == "__main__":
 
     print("\n📊 Results:")
     for disease, success in results.items():
-        status = "✅" if success else "❌"
+        status = "OK" if success else "FAIL"
         print(f"  {status} {disease}")
