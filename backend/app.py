@@ -373,7 +373,7 @@ async def refresh_who_data(force: bool = False):
     data_dir = os.path.join(os.path.dirname(__file__), "who_data")
     
     # Get Gemini API Key from environment for Bengali translation
-    gemini_api_key = os.getenv("GEMINI_API_KEY", "")
+    gemini_api_key = os.getenv("GEMINI_API_KEY", "").strip()
     
     from scraper import scrape_all_who_data
     results = scrape_all_who_data(
