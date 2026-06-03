@@ -9,7 +9,7 @@ This service accepts community health inputs and returns comprehensive JSON risk
 1. **XGBoost ML Classification**: Predicts risk probabilities for Hypertension, Diabetes, Malnutrition, and Heart Disease using trained XGBoost models.
 2. **RAG Pipeline**: Retrieves highly relevant context from WHO clinical guidelines and Bangladesh DGHS localized protocols.
 3. **Knowledge Graph Engine**: Maps patient risk factors into a conceptual graph to uncover hidden interactions and comorbidities.
-4. **Ollama Local LLM**: Uses a locally hosted LLM (via Ollama) to synthesize ML data, graph insights, and RAG context into personalized clinical advice.
+4. **Google Gemini API**: Uses Gemini Cloud LLM to synthesize ML data, graph insights, and RAG context into personalized clinical advice.
 5. **Rule-Based Personalization Engine**: Deterministically triggers actionable micro-suggestions based on specific patient risk factors (e.g., smoking, high BMI).
 6. **Bilingual Support**: Full support for both English and Bengali (`bn`) languages across LLM generations, explanations, and personalization.
 7. **Live WHO Scraping**: Endpoints to scrape the latest WHO fact sheets directly from the web (`/scrape/refresh`).
@@ -84,4 +84,4 @@ Required fields:
 - The frontend calls this API through Vite's `/api` proxy during local development.
 - The backend uses PostgreSQL when `DATABASE_URL` is set, which is the expected Render deployment setup.
 - If `DATABASE_URL` is not set, the backend falls back to a local SQLite database file in `backend/data.sqlite3` for development.
-- To use the LLM capabilities, an instance of Ollama needs to be running or configured via `OLLAMA_URL`.
+- To use the LLM capabilities and automatic Bengali translation, provide a valid Google Gemini API Key via the `GEMINI_API_KEY` environment variable.

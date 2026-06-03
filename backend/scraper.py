@@ -259,7 +259,7 @@ Risk Factors:
 # ============================================
 def scrape_all_who_data(
     data_dir: str,
-    use_ollama_translation: bool = True,
+    use_gemini_translation: bool = True,
     gemini_api_key: str = "",
     force_refresh: bool = False
 ) -> Dict[str, bool]:
@@ -324,7 +324,7 @@ def scrape_all_who_data(
             print(f"  💾 Saved: {config['en_file']}")
 
             # Generate Bengali translation
-            if use_ollama_translation:
+            if use_gemini_translation:
                 print(f"  🔄 Translating to Bengali via Gemini...")
                 bn_content = translate_to_bengali_via_gemini(
                     en_content, disease, gemini_api_key
@@ -411,8 +411,8 @@ if __name__ == "__main__":
 
     results = scrape_all_who_data(
         data_dir=data_dir,
-        use_ollama_translation=True,
-        ollama_url="https://unpopular-creasing-panoramic.ngrok-free.de",
+        use_gemini_translation=True,
+        gemini_api_key="",
         force_refresh=True
     )
 

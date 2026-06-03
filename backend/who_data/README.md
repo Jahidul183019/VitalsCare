@@ -49,7 +49,7 @@ TF-IDF Term Matching
       ↓
 Top 2 Relevant Chunks Retrieved
       ↓
-Passed to Ollama LLM as Context
+Passed to Gemini LLM as Context
       ↓
 Personalized Bengali/English Advice
 ```

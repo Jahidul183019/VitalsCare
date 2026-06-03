@@ -186,9 +186,9 @@ async def assess(patient: PatientData):
             patient_dict, risk_scores, lang
         )
 
-        # STEP 4: Ollama LLM
+        # STEP 4: Gemini LLM
         # Combines ML + RAG + Graph → Bengali advice
-        print("🦙 Running Ollama LLM...")
+        print("☁️ Running Gemini LLM...")
         ai_recommendation = generate_recommendation(
             patient_data=patient_dict,
             risk_scores=risk_scores,
@@ -378,7 +378,7 @@ async def refresh_who_data(force: bool = False):
     from scraper import scrape_all_who_data
     results = scrape_all_who_data(
         data_dir=data_dir,
-        use_ollama_translation=True, # We keep this true, but it uses Gemini under the hood now
+        use_gemini_translation=True,
         gemini_api_key=gemini_api_key,
         force_refresh=force
     )
