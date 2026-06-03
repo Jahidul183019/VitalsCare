@@ -156,11 +156,3 @@ def get_fallback_advice(risk_scores: dict, lang: str) -> str:
             return f"High risk detected for {', '.join(high_risks)}. Please consult a doctor."
         return "Your health risk is low. Keep maintaining healthy habits."
 
-
-def check_ollama_running() -> bool:
-    """Check if Ollama is running"""
-    try:
-        models = ollama.list()
-        return True
-    except:
-        return False

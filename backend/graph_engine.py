@@ -46,6 +46,7 @@ class _KG:
         self.add_node("hypertension", "Hypertension", "Disease")
         self.add_node("diabetes", "Diabetes", "Disease")
         self.add_node("cvd", "Cardiovascular Disease", "Disease")
+        self.add_node("malnutrition", "Malnutrition", "Disease")
 
         # Add Risk Factor Nodes
         self.add_node("smoking", "Smoking", "RiskFactor")
@@ -55,6 +56,9 @@ class _KG:
         self.add_node("family_history", "Family History", "RiskFactor")
         self.add_node("poor_diet", "Poor Diet", "RiskFactor")
         self.add_node("high_stress", "High Stress", "RiskFactor")
+        self.add_node("low_income", "Low Income", "RiskFactor")
+        self.add_node("low_diversity", "Low Dietary Diversity", "RiskFactor")
+        self.add_node("children_under5", "Children Under 5 Present", "RiskFactor")
 
         # Add Directed Edges (Relationships)
         self.add_edge("smoking", "cvd", "strongly increases risk of")
@@ -73,6 +77,10 @@ class _KG:
         self.add_edge("poor_diet", "hypertension", "worsens")
         self.add_edge("high_stress", "hypertension", "temporarily elevates")
         self.add_edge("high_stress", "cvd", "correlates with")
+        self.add_edge("low_income", "malnutrition", "strongly increases risk of")
+        self.add_edge("low_diversity", "malnutrition", "directly causes")
+        self.add_edge("poor_diet", "malnutrition", "causes")
+        self.add_edge("children_under5", "malnutrition", "increases household risk of")
 
     def _get_active_risk_factors(self, patient: dict) -> List[str]:
         """Maps patient data points to active risk factor nodes in the graph."""
@@ -91,6 +99,12 @@ class _KG:
             active.append("poor_diet")
         if patient.get("stress_level") == "high":
             active.append("high_stress")
+        if str(patient.get("income_level", "")).lower() == "low":
+            active.append("low_income")
+        if float(patient.get("dietary_diversity", 10)) < 4:
+            active.append("low_diversity")
+        if int(patient.get("children_under5", 0)) > 2:
+            active.append("children_under5")
         return active
 
     def graph_reasoning(self, patient: dict, risk_scores: dict, lang: str = "en") -> Dict[str, Any]:
@@ -109,6 +123,8 @@ class _KG:
             elevated_diseases.append("diabetes")
         if risk_scores.get("heart_disease", {}).get("risk_level") in ["medium", "high"]:
             elevated_diseases.append("cvd") # Map ML key to Graph key
+        if risk_scores.get("malnutrition", {}).get("risk_level") in ["medium", "high"]:
+            elevated_diseases.append("malnutrition")
             
         # Graph Traversal: For each elevated disease, trace paths back to active risk factors
         for disease_id in elevated_diseases:

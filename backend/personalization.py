@@ -1,22 +1,80 @@
-"""Personalization module with a simple in-memory profile store.
+"""Personalization module with persistent profile store.
 
 Used by the app to update and fetch simple personalized messages.
 """
 from __future__ import annotations
 
+import json
 from typing import Dict, Any
+from db import get_conn, _USE_POSTGRES
 
-_STORE: Dict[str, Dict[str, Any]] = {}
-
+try:
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute('''
+        CREATE TABLE IF NOT EXISTS profiles (
+            user_id TEXT PRIMARY KEY,
+            patient_data TEXT,
+            risk_scores TEXT,
+            updated_at TEXT
+        )
+    ''')
+    conn.commit()
+    conn.close()
+except Exception as e:
+    print("Warning: Could not create profiles table:", e)
 
 class _Personalization:
     @staticmethod
     def update_profile(user_id: str, patient_data: dict, risk_scores: dict) -> None:
-        _STORE[user_id] = {"patient": patient_data, "risk": risk_scores}
+        import datetime
+        now = datetime.datetime.now().isoformat()
+        try:
+            conn = get_conn()
+            cur = conn.cursor()
+            
+            p_data_str = json.dumps(patient_data)
+            r_scores_str = json.dumps(risk_scores)
+            
+            if _USE_POSTGRES:
+                cur.execute(
+                    'INSERT INTO profiles(user_id, patient_data, risk_scores, updated_at) VALUES (%s, %s, %s, %s) ON CONFLICT (user_id) DO UPDATE SET patient_data = EXCLUDED.patient_data, risk_scores = EXCLUDED.risk_scores, updated_at = EXCLUDED.updated_at',
+                    (user_id, p_data_str, r_scores_str, now)
+                )
+            else:
+                cur.execute(
+                    'INSERT OR REPLACE INTO profiles(user_id, patient_data, risk_scores, updated_at) VALUES (?, ?, ?, ?)',
+                    (user_id, p_data_str, r_scores_str, now)
+                )
+            conn.commit()
+            conn.close()
+        except Exception as e:
+            print(f"Error updating profile: {e}")
 
     @staticmethod
     def get_personalized_message(user_id: str, lang: str = "en") -> Dict[str, str]:
-        profile = _STORE.get(user_id)
+        profile = None
+        try:
+            conn = get_conn()
+            if _USE_POSTGRES:
+                import psycopg2.extras
+                cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+                cur.execute('SELECT patient_data, risk_scores FROM profiles WHERE user_id = %s', (user_id,))
+                row = cur.fetchone()
+            else:
+                cur = conn.cursor()
+                cur.execute('SELECT patient_data, risk_scores FROM profiles WHERE user_id = ?', (user_id,))
+                row = cur.fetchone()
+            conn.close()
+            
+            if row:
+                profile = {
+                    "patient": json.loads(row["patient_data"]),
+                    "risk": json.loads(row["risk_scores"])
+                }
+        except Exception as e:
+            print(f"Error fetching profile: {e}")
+
         if not profile:
             return {"message": "No personalization available." if lang == "en" else "কোনো ব্যক্তিগতকরণ উপলব্ধ নেই।"}
             
