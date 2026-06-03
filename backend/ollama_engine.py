@@ -1,7 +1,7 @@
 import requests
 import os
 
-OLLAMA_URL = os.getenv("OLLAMA_URL", "https://unpopular-creasing-panoramic.ngrok-free.de")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 
 
 # =========================
@@ -55,20 +55,45 @@ Provide:
 Max 150 words.
 """
 
+    if not GEMINI_API_KEY:
+        return {
+            "ai_advice": get_fallback_advice(risk_scores, lang),
+            "model": "fallback",
+            "language": lang,
+            "status": "error",
+            "error": "GEMINI_API_KEY is not set."
+        }
+
     try:
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
+        
+        payload = {
+            "contents": [{
+                "parts": [{"text": prompt}]
+            }],
+            "generationConfig": {
+                "maxOutputTokens": 300,
+                "temperature": 0.2
+            }
+        }
+        
         response = requests.post(
-            f"{OLLAMA_URL}/api/generate",
-            json={
-                "model": "gemma2",
-                "prompt": prompt,
-                "stream": False
-            },
-            timeout=60
+            url,
+            json=payload,
+            headers={"Content-Type": "application/json"},
+            timeout=15
         )
+        
+        response_data = response.json()
+        
+        if response.status_code != 200:
+            raise Exception(f"Gemini API Error: {response_data.get('error', {}).get('message', 'Unknown Error')}")
+            
+        ai_text = response_data.get("candidates", [])[0].get("content", {}).get("parts", [])[0].get("text", "")
 
         return {
-            "ai_advice": response.json().get("response", ""),
-            "model": "gemma2 (ngrok)",
+            "ai_advice": ai_text,
+            "model": "gemini-1.5-flash",
             "language": lang,
             "status": "success"
         }
@@ -109,29 +134,42 @@ Explain in 2 simple sentences.
 No medical jargon.
 """
 
-    try:
-        response = requests.post(
-            f"{OLLAMA_URL}/api/generate",
-            json={
-                "model": "gemma2",
-                "prompt": prompt,
-                "stream": False
-            },
-            timeout=60
-        )
+    if not GEMINI_API_KEY:
+        return f"{disease} risk is {risk_level} based on health data."
 
-        return response.json().get("response", "")
+    try:
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
+        
+        payload = {
+            "contents": [{
+                "parts": [{"text": prompt}]
+            }],
+            "generationConfig": {
+                "maxOutputTokens": 100,
+                "temperature": 0.2
+            }
+        }
+        
+        response = requests.post(url, json=payload, headers={"Content-Type": "application/json"}, timeout=10)
+        
+        if response.status_code != 200:
+            raise Exception()
+            
+        return response.json().get("candidates", [])[0].get("content", {}).get("parts", [])[0].get("text", "")
 
     except Exception:
         return f"{disease} risk is {risk_level} based on health data."
 
 
 # =========================
-# CHECK OLLAMA STATUS
+# CHECK LLM STATUS (Named ollama for compatibility)
 # =========================
 def check_ollama_running() -> bool:
+    if not GEMINI_API_KEY:
+        return False
     try:
-        r = requests.get(f"{OLLAMA_URL}/api/tags", timeout=5)
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash?key={GEMINI_API_KEY}"
+        r = requests.get(url, timeout=5)
         return r.status_code == 200
     except:
         return False

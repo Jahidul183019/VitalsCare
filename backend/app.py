@@ -128,15 +128,15 @@ class PatientData(BaseModel):
 
 @app.get("/health")
 async def health():
-    ollama_status = check_ollama_running()
+    llm_status = check_ollama_running()
     return {
         "status": "VitalsCare v3.0 Running ✅",
-        "ollama": "connected ✅" if ollama_status else "not running ❌",
+        "gemini": "connected ✅" if llm_status else "not running ❌",
         "features": [
             "XGBoost ML ✅",
             "RAG Pipeline ✅",
             "Knowledge Graph ✅",
-            "Ollama Local LLM ✅",
+            "Gemini Cloud LLM ✅",
             "Bengali Support ✅",
             "Personalization ✅"
         ]
@@ -241,7 +241,7 @@ async def assess(patient: PatientData):
                 "step1": "XGBoost ML ✅",
                 "step2": "RAG + WHO Guidelines ✅",
                 "step3": "Knowledge Graph ✅",
-                "step4": "Ollama Local LLM ✅",
+                "step4": "Gemini Cloud LLM ✅",
                 "step5": "Personalization ✅"
             },
             # Compatibility fields for frontend
@@ -372,17 +372,14 @@ async def refresh_who_data(force: bool = False):
     import os
     data_dir = os.path.join(os.path.dirname(__file__), "who_data")
     
-    # Get ngrok URL from environment for Bengali translation
-    ollama_url = os.getenv(
-        "OLLAMA_URL",
-        "https://unpopular-creasing-panoramic.ngrok-free.de"
-    )
+    # Get Gemini API Key from environment for Bengali translation
+    gemini_api_key = os.getenv("GEMINI_API_KEY", "")
     
     from scraper import scrape_all_who_data
     results = scrape_all_who_data(
         data_dir=data_dir,
-        use_ollama_translation=True,
-        ollama_url=ollama_url,
+        use_ollama_translation=True, # We keep this true, but it uses Gemini under the hood now
+        gemini_api_key=gemini_api_key,
         force_refresh=force
     )
     

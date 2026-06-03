@@ -124,15 +124,19 @@ def scrape_who_page(url: str, disease: str) -> Optional[str]:
 # ============================================
 # BENGALI TRANSLATOR
 # ============================================
-def translate_to_bengali_via_ollama(
+def translate_to_bengali_via_gemini(
     text: str,
     disease: str,
-    ollama_url: str = "http://localhost:11434"
+    gemini_api_key: str = ""
 ) -> Optional[str]:
     """
-    Use local Ollama to translate scraped WHO
+    Use Google Gemini API to translate scraped WHO
     content into Bengali
     """
+    if not gemini_api_key:
+        print("  ⚠️ No Gemini API key provided for translation.")
+        return None
+        
     # Only translate first 2000 chars to save time
     short_text = text[:2000]
 
@@ -144,22 +148,29 @@ Text to translate:
 {short_text}"""
 
     try:
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_api_key}"
+        payload = {
+            "contents": [{"parts": [{"text": prompt}]}],
+            "generationConfig": {"temperature": 0.2}
+        }
+        
         response = requests.post(
-            f"{ollama_url}/api/generate",
-            json={
-                "model": "gemma2",
-                "prompt": prompt,
-                "stream": False
-            },
-            timeout=120
+            url,
+            json=payload,
+            headers={"Content-Type": "application/json"},
+            timeout=30
         )
-        result = response.json().get("response", "")
-        if result:
-            header = f"WHO {disease.title()} নির্দেশিকা (বাংলা)\n"
-            header += f"সূত্র: WHO Fact Sheet\n"
-            header += f"তারিখ: {datetime.now().strftime('%Y-%m-%d')}\n"
-            header += "=" * 60 + "\n\n"
-            return header + result
+        
+        if response.status_code == 200:
+            result = response.json().get("candidates", [])[0].get("content", {}).get("parts", [])[0].get("text", "")
+            if result:
+                header = f"WHO {disease.title()} নির্দেশিকা (বাংলা)\n"
+                header += f"সূত্র: WHO Fact Sheet\n"
+                header += f"তারিখ: {datetime.now().strftime('%Y-%m-%d')}\n"
+                header += "=" * 60 + "\n\n"
+                return header + result
+        else:
+            print(f"  ⚠️ Gemini translation HTTP error: {response.status_code}")
         return None
     except Exception as e:
         print(f"  ⚠️ Bengali translation failed: {e}")
@@ -249,7 +260,7 @@ Risk Factors:
 def scrape_all_who_data(
     data_dir: str,
     use_ollama_translation: bool = True,
-    ollama_url: str = "http://localhost:11434",
+    gemini_api_key: str = "",
     force_refresh: bool = False
 ) -> Dict[str, bool]:
     """
@@ -314,9 +325,9 @@ def scrape_all_who_data(
 
             # Generate Bengali translation
             if use_ollama_translation:
-                print(f"  🔄 Translating to Bengali via Ollama...")
-                bn_content = translate_to_bengali_via_ollama(
-                    en_content, disease, ollama_url
+                print(f"  🔄 Translating to Bengali via Gemini...")
+                bn_content = translate_to_bengali_via_gemini(
+                    en_content, disease, gemini_api_key
                 )
             else:
                 bn_content = None
