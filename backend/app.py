@@ -19,9 +19,9 @@ from rag_pipeline import get_who_recommendations
 from explainer import explain_risk
 from graph_engine import knowledge_graph
 from personalization import personalization
-from ollama_engine import (
+from gemini_engine import (
     generate_recommendation,
-    check_ollama_running
+    check_gemini_running
 )
 from scraper import scrape_all_who_data, get_scrape_status
 
@@ -128,7 +128,7 @@ class PatientData(BaseModel):
 
 @app.get("/health")
 async def health():
-    llm_status = check_ollama_running()
+    llm_status = check_gemini_running()
     return {
         "status": "VitalsCare v3.0 Running ✅",
         "gemini": "connected ✅" if llm_status else "not running ❌",

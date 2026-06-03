@@ -111,7 +111,7 @@ Max 150 words.
 # =========================
 # RISK EXPLANATION
 # =========================
-def explain_risk_with_ollama(
+def explain_risk_with_gemini(
     disease: str,
     risk_level: str,
     factors: list,
@@ -162,9 +162,9 @@ No medical jargon.
 
 
 # =========================
-# CHECK LLM STATUS (Named ollama for compatibility)
+# CHECK GEMINI STATUS
 # =========================
-def check_ollama_running() -> bool:
+def check_gemini_running() -> bool:
     if not GEMINI_API_KEY:
         return False
     try:
