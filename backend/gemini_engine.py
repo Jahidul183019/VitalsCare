@@ -252,7 +252,7 @@ def chat_with_gemini(messages: list, lang: str = "en") -> str:
     except Exception as e:
         print(f"Chatbot Gemini Error: {e}")
         if lang == "bn":
-            return "দুঃখিত, এআই সার্ভারটি বর্তমানে উপলব্ধ নেই। অনুগ্রহ করে আপনার সেটিংস যাচাই করুন।"
-        return "AI service is currently unavailable. Please verify your GEMINI_API_KEY settings or try again later."
+            return f"দুঃখিত, এআই সার্ভারটি বর্তমানে উপলব্ধ নেই। ({str(e)})"
+        return f"AI service is currently unavailable. Please verify your GEMINI_API_KEY settings or try again later. Error details: {str(e)}"
 
 
