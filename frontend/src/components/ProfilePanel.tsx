@@ -10,11 +10,8 @@ import {
   Heart, 
   Info,
   ChevronLeft,
-  Mail,
-  Lock,
   LogOut,
-  Sparkles,
-  AlertCircle
+  Sparkles
 } from "lucide-react";
 import { AssessmentData, ViewType } from "../types";
 
@@ -25,8 +22,6 @@ interface ProfilePanelProps {
   assessmentData: AssessmentData;
   onNavigate: (view: ViewType) => void;
   activeEmail: string;
-  onLogin: (email: string, pass: string) => Promise<boolean | string> | boolean | string;
-  onSignUp: (email: string, pass: string, name: string) => Promise<boolean | string> | boolean | string;
   onSignOut: () => void | Promise<void>;
 }
 
@@ -37,18 +32,9 @@ export default function ProfilePanel({
   assessmentData,
   onNavigate,
   activeEmail,
-  onLogin,
-  onSignUp,
   onSignOut,
 }: ProfilePanelProps) {
   
-  const [activeTab, setActiveTab] = useState<"login" | "signup">("login");
-  const [emailText, setEmailText] = useState("");
-  const [passwordText, setPasswordText] = useState("");
-  const [nameText, setNameText] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
-  const [authSuccess, setAuthSuccess] = useState("");
-
   const [tempName, setTempName] = useState(profileName);
   const [savedSuccess, setSavedSuccess] = useState(false);
 
@@ -61,33 +47,6 @@ export default function ProfilePanel({
       setProfileName(tempName.trim());
       setSavedSuccess(true);
       setTimeout(() => setSavedSuccess(false), 2500);
-    }
-  };
-
-  const handleAuthAction = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrorMessage("");
-    setAuthSuccess("");
-
-    if (activeTab === "login") {
-      const res = await onLogin(emailText, passwordText);
-      if (typeof res === "string") {
-        setErrorMessage(res);
-      } else if (res === true) {
-        setAuthSuccess(lang === "EN" ? "Welcome back!" : "স্বাগতম!");
-        setEmailText("");
-        setPasswordText("");
-      }
-    } else {
-      const res = await onSignUp(emailText, passwordText, nameText);
-      if (typeof res === "string") {
-        setErrorMessage(res);
-      } else if (res === true) {
-        setAuthSuccess(lang === "EN" ? "Account created successfully!" : "অ্যাকাউন্ট সফলভাবে তৈরি হয়েছে!");
-        setEmailText("");
-        setPasswordText("");
-        setNameText("");
-      }
     }
   };
 
@@ -114,15 +73,8 @@ export default function ProfilePanel({
       hypertension: "Hypertension",
       stroke: "Arterial Stroke",
       heartDisease: "Coronary Heart Disease",
-      authCardTitle: "Secure Patient Registry Access",
-      emailPh: "E.g. sarah@domain.com",
-      passPh: "Security Password",
-      namePh: "Patient Display Name",
-      loginTab: "Sign In",
-      registerTab: "Sign Up",
       logoutBtn: "Log Out Profiles",
       activeAs: "Logged in securely as",
-      guestNotice: "Browsing in Guest Mode. Connect or register an account to isolate screening logs and view trends over sessions."
     },
     BN: {
       header: "রোগী অঞ্চল এবং নিবন্ধন",
@@ -143,15 +95,8 @@ export default function ProfilePanel({
       hypertension: "গুরুতর উচ্চ রক্তচাপ",
       stroke: "মস্তিষ্কে স্ট্রোক",
       heartDisease: "হৃদরোগ (Coronary)",
-      authCardTitle: "সুরক্ষিত রোগী রেকর্ড অ্যাক্সেস",
-      emailPh: "উদাহরণ: patient@care.com",
-      passPh: "নিরাপত্তা পাসওয়ার্ড",
-      namePh: "রোগী প্রদর্শিত নাম",
-      loginTab: "লগ ইন",
-      registerTab: "নিবন্ধন করুন",
       logoutBtn: "লগ আউট করুন",
       activeAs: "সুরক্ষিত লগইন অ্যাকাউন্ট",
-      guestNotice: "অতিথি মোডে ব্রাউজ করছেন। পৃথক স্বাস্থ্য রেকর্ড ট্র্যাক করতে এবং ড্যাশবোর্ড সেশন হিস্ট্রি ধরে রাখতে লগইন বা অ্যাকাউন্ট তৈরি করুন।"
     }
   };
 
@@ -182,20 +127,10 @@ export default function ProfilePanel({
           </p>
         </div>
 
-        {/* Authenticate Notice or Guest Alert banner */}
-        {!activeEmail && (
-          <div className="bg-primary/5 border border-primary/20 rounded-2xl p-4 flex gap-3 text-xs text-primary max-w-4xl">
-            <Info className="w-5 h-5 shrink-0" />
-            <p>{currentT.guestNotice}</p>
-          </div>
-        )}
-
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-stretch">
           
-          {/* LEFT CONTAINER: Auth Cards OR Customize Name card (Spans 5 columns) */}
+          {/* LEFT CONTAINER: Customize Name card (Spans 5 columns) */}
           <div className="md:col-span-5 flex flex-col gap-6">
-            {activeEmail ? (
-              /* IF LOGGED IN: Manage profile details */
               <div className="bg-surface-container-lowest border border-outline-variant/40 rounded-3xl p-6 shadow-sm flex flex-col justify-between h-full gap-6">
                 <div className="space-y-5">
                   <h3 className="text-sm font-bold text-on-surface-variant uppercase tracking-wider border-b border-outline-variant/20 pb-3 flex items-center justify-between">
@@ -252,154 +187,6 @@ export default function ProfilePanel({
                   </button>
                 </div>
               </div>
-            ) : (
-              /* IF LOGGED OUT: Stack local personalized details & account login tabs */
-              <>
-                {/* Guest Personalizer */}
-                <div className="bg-surface-container-lowest border border-outline-variant/40 rounded-3xl p-6 shadow-sm flex flex-col gap-4">
-                  <h3 className="text-sm font-bold text-on-surface-variant uppercase tracking-wider border-b border-outline-variant/20 pb-3 flex items-center justify-between">
-                    <span>{currentT.personalLabel}</span>
-                    <span className="text-[10px] bg-amber-500/10 text-amber-600 dark:text-amber-400 px-2 py-0.5 rounded font-extrabold font-mono uppercase">
-                      GUEST MODE
-                    </span>
-                  </h3>
-                  
-                  <div className="flex flex-col gap-2">
-                    <label className="text-[11px] font-bold text-on-surface-variant uppercase tracking-wide">
-                      {currentT.nameLabel}
-                    </label>
-                    <input 
-                      type="text"
-                      value={tempName}
-                      onChange={(e) => setTempName(e.target.value)}
-                      className="bg-background border border-outline-variant/50 focus:border-primary rounded-xl px-4 py-3 text-xs md:text-sm font-bold tracking-tight text-on-surface outline-none"
-                      placeholder="E.g. Sarah Jameel"
-                    />
-                  </div>
-
-                  <button 
-                    onClick={handleSaveProfile}
-                    id="save-guest-profile-btn"
-                    className="w-full bg-primary text-on-primary hover:bg-opacity-95 py-2.5 rounded-xl font-bold text-xs tracking-tight transition-all active:scale-95 flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
-                  >
-                    {savedSuccess ? (
-                      <>
-                        <Check className="w-4 h-4" /> {currentT.saved}
-                      </>
-                    ) : (
-                      currentT.saveBtn
-                    )}
-                  </button>
-                </div>
-
-                {/* Authentication Interface Tabs */}
-                <div className="bg-surface-container-lowest border border-outline-variant/40 rounded-3xl p-6 shadow-sm flex flex-col gap-4 font-sans text-left">
-                  <div>
-                    <h3 className="text-sm font-bold text-on-surface-variant uppercase tracking-wider border-b border-outline-variant/20 pb-3">
-                      {currentT.authCardTitle}
-                    </h3>
-
-                    {/* Tabs */}
-                    <div className="flex bg-surface-container/50 border border-outline-variant/20 p-1.5 rounded-xl gap-2 mt-4">
-                      <button 
-                        onClick={() => { setActiveTab("login"); setErrorMessage(""); setAuthSuccess(""); }}
-                        className={`flex-1 text-center py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
-                          activeTab === "login" 
-                            ? "bg-primary text-on-primary shadow-sm" 
-                            : "text-on-surface-variant hover:text-on-surface"
-                        }`}
-                      >
-                        {currentT.loginTab}
-                      </button>
-                      <button 
-                        onClick={() => { setActiveTab("signup"); setErrorMessage(""); setAuthSuccess(""); }}
-                        className={`flex-1 text-center py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
-                          activeTab === "signup" 
-                            ? "bg-primary text-on-primary shadow-sm" 
-                            : "text-on-surface-variant hover:text-on-surface"
-                        }`}
-                      >
-                        {currentT.registerTab}
-                      </button>
-                    </div>
-
-                    <form onSubmit={handleAuthAction} className="space-y-4 mt-5">
-                      {errorMessage && (
-                        <div className="bg-red-500/10 border border-red-500/35 text-red-600 dark:text-red-400 p-3 rounded-xl flex gap-2 text-xs font-bold animate-fadeIn">
-                          <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                          <span>{errorMessage}</span>
-                        </div>
-                      )}
-
-                      {authSuccess && (
-                        <div className="bg-emerald-500/10 border border-emerald-500/35 text-emerald-600 p-3 rounded-xl flex gap-1.5 text-xs font-bold animate-fadeIn">
-                          <Check className="w-4 h-4 shrink-0 mt-0.5" />
-                          <span>{authSuccess}</span>
-                        </div>
-                      )}
-
-                      {activeTab === "signup" && (
-                        <div className="flex flex-col gap-1.5">
-                          <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wide">
-                            {currentT.namePh}
-                          </label>
-                          <input 
-                            type="text"
-                            required
-                            value={nameText}
-                            onChange={(e) => setNameText(e.target.value)}
-                            className="bg-background border border-outline-variant/50 focus:border-primary rounded-xl px-3.5 py-2.5 text-xs font-bold tracking-tight text-on-surface outline-none"
-                            placeholder="E.g. Sarah Jameel"
-                          />
-                        </div>
-                      )}
-
-                      <div className="flex flex-col gap-1.5">
-                        <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wide">
-                          Email Address
-                        </label>
-                        <div className="relative flex items-center">
-                          <Mail className="w-4 h-4 text-on-surface-variant/70 absolute left-3" />
-                          <input 
-                            type="email"
-                            required
-                            value={emailText}
-                            onChange={(e) => setEmailText(e.target.value)}
-                            className="bg-background border border-outline-variant/50 focus:border-primary rounded-xl pl-9 pr-3.5 py-2.5 text-xs font-bold tracking-tight text-on-surface outline-none w-full"
-                            placeholder={currentT.emailPh}
-                          />
-                        </div>
-                      </div>
-
-                      <div className="flex flex-col gap-1.5">
-                        <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wide">
-                          {currentT.passPh}
-                        </label>
-                        <div className="relative flex items-center">
-                          <Lock className="w-4 h-4 text-on-surface-variant/70 absolute left-3" />
-                          <input 
-                            type="password"
-                            required
-                            value={passwordText}
-                            onChange={(e) => setPasswordText(e.target.value)}
-                            className="bg-background border border-outline-variant/50 focus:border-primary rounded-xl pl-9 pr-3.5 py-2.5 text-xs font-bold tracking-tight text-on-surface outline-none w-full"
-                            placeholder="••••••••"
-                          />
-                        </div>
-                      </div>
-
-                      <button 
-                        type="submit"
-                        id="auth-submit-btn"
-                        className="w-full bg-primary text-on-primary hover:bg-opacity-95 py-3 rounded-xl font-bold text-xs tracking-tight transition-all active:scale-95 flex items-center justify-center gap-1.5 shadow-sm mt-6 cursor-pointer"
-                      >
-                        {activeTab === "login" ? currentT.loginTab : currentT.registerTab}
-                      </button>
-                    </form>
-                  </div>
-                </div>
-              </>
-            )}
           </div>
 
           {/* Card 2: List current Screening indicators (Spans 7 columns) */}

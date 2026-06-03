@@ -20,6 +20,7 @@ import RiskDashboard from "./components/RiskDashboard";
 import AssessmentForm from "./components/AssessmentForm";
 import ChatbotPanel from "./components/ChatbotPanel";
 import ProfilePanel from "./components/ProfilePanel";
+import AuthPanel from "./components/AuthPanel";
 
 // Default standard baseline screening data matching low risk screens
 const DEFAULT_ASSESSMENT: AssessmentData = {
@@ -457,10 +458,10 @@ export default function App() {
               title="Health Profile Settings"
             >
               <div className="w-8 h-8 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold text-sm tracking-tight">
-                {profileInitials}
+            {activeEmail ? profileInitials : <User className="w-4 h-4" />}
               </div>
               <span className="hidden md:inline text-xs font-bold text-on-surface pr-1.5 select-none hover:underline">
-                {profileName}
+            {activeEmail ? profileName : (lang === "EN" ? "Sign In" : "লগ ইন")}
               </span>
             </div>
 
@@ -513,17 +514,24 @@ export default function App() {
         )}
 
         {view === "profile" && (
-          <ProfilePanel 
-            lang={lang}
-            profileName={profileName}
-            setProfileName={setProfileName}
-            assessmentData={assessmentData}
-            onNavigate={setView}
-            activeEmail={activeEmail}
-            onLogin={handleLogin}
-            onSignUp={handleSignUp}
-            onSignOut={handleSignOut}
-          />
+          activeEmail ? (
+            <ProfilePanel 
+              lang={lang}
+              profileName={profileName}
+              setProfileName={setProfileName}
+              assessmentData={assessmentData}
+              onNavigate={setView}
+              activeEmail={activeEmail}
+              onSignOut={handleSignOut}
+            />
+          ) : (
+            <AuthPanel 
+              lang={lang}
+              onNavigate={setView}
+              onLogin={handleLogin}
+              onSignUp={handleSignUp}
+            />
+          )
         )}
       </div>
 
