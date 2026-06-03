@@ -4,11 +4,6 @@ pydantic
 xgboost
 scikit-learn
 numpy
-joblib
-langchain
-langchain-community
-chromadb
-sentence-transformers
 pypdf
 sqlalchemy
 psycopg2-binary
@@ -16,3 +11,4 @@ python-jose
 passlib[bcrypt]
 bcrypt
 gunicorn
+requests
