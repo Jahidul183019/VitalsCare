@@ -10,12 +10,12 @@ export default async function handler(req: any, res: any) {
     return res.status(400).json({ error: 'Invalid messages format' });
   }
 
-  const apiKey = process.env.CHATBOT_API_KEY || process.env.GEMINI_API_KEY;
+  const apiKey = process.env.CHATBOT_API_KEY;
   const isKeyAvailable = !!apiKey;
 
   if (!isKeyAvailable) {
     return res.status(200).json({
-      text: "Hello! I am your VitalCare Assistant. (Demo Mode: CHATBOT_API_KEY or GEMINI_API_KEY is not configured yet in the Settings secrets). In this preview, I can guide you through using the app! You can navigate to Home to inspect the dashboard, or head to the 'Assess' tab at the top or bottom to initiate a live hypertension and diabetes screening assessment. Once completed, your live risk gauge, insights, and actions will update beautifully! Please consult a real doctor for clinical diagnosis.",
+      text: "Hello! I am your VitalCare Assistant. (Demo Mode: CHATBOT_API_KEY is not configured yet in the Settings secrets). In this preview, I can guide you through using the app! You can navigate to Home to inspect the dashboard, or head to the 'Assess' tab at the top or bottom to initiate a live hypertension and diabetes screening assessment. Once completed, your live risk gauge, insights, and actions will update beautifully! Please consult a real doctor for clinical diagnosis.",
     });
   }
 
