@@ -129,7 +129,7 @@ class PatientData(BaseModel):
 
 @app.get("/health")
 def health_check():
-    gemini_status = "running" if gemini_engine.check_gemini_running() else "not running"
+    gemini_status = "running" if check_gemini_running() else "not running"
     return {
         "status": "VitalsCare v3.0 Running",
         "gemini": "connected" if gemini_status == "running" else "not running",
