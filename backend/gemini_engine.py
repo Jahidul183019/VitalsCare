@@ -72,7 +72,7 @@ Max 150 words.
                 "parts": [{"text": prompt}]
             }],
             "generationConfig": {
-                "maxOutputTokens": 300,
+                "maxOutputTokens": 512,
                 "temperature": 0.2
             }
         }
@@ -236,7 +236,7 @@ def chat_with_gemini(messages: list, lang: str = "en") -> str:
                 "parts": [{"text": system_instruction}]
             },
             "generationConfig": {
-                "maxOutputTokens": 300,
+                "maxOutputTokens": 1024,
                 "temperature": 0.3
             }
         }
