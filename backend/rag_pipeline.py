@@ -10,7 +10,7 @@ import os
 import re
 import math
 from typing import Dict, List, Any
-from scraper import scrape_who_live
+from scraper import scrape_who_page, WHO_SOURCES
 
 try:
     import pypdf
@@ -116,7 +116,9 @@ def get_who_recommendations(disease: str, risk_level: str, patient: dict, lang: 
     """Retrieve matches from the WHO guideline library based on disease context."""
     
     # Attempt to scrape live WHO data first
-    live_text = scrape_who_live(disease)
+    config = WHO_SOURCES.get(disease, {})
+    url = config.get("url")
+    live_text = scrape_who_page(url, disease) if url else None
     
     if live_text and len(live_text.strip()) > 100:
         chunks = _split_text(live_text, f"Live WHO {disease.capitalize()} Fact Sheet")
