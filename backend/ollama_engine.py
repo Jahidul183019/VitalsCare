@@ -1,7 +1,7 @@
 import requests
+import os
 
-
-OLLAMA_URL = "https://unpopular-creasing-panoramic.ngrok-free.de"
+OLLAMA_URL = os.getenv("OLLAMA_URL", "https://unpopular-creasing-panoramic.ngrok-free.de")
 
 
 # =========================

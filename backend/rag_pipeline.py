@@ -115,19 +115,8 @@ def _retrieve_top_chunks(query: str, chunks: List[Dict[str, str]], top_k: int = 
 def get_who_recommendations(disease: str, risk_level: str, patient: dict, lang: str = "en") -> Dict[str, Any]:
     """Retrieve matches from the WHO guideline library based on disease context."""
     
-    # Attempt to scrape live WHO data first
-    config = WHO_SOURCES.get(disease, {})
-    url = config.get("url")
-    live_text = scrape_who_page(url, disease) if url else None
-    
-    if live_text and len(live_text.strip()) > 100:
-        chunks = _split_text(live_text, f"Live WHO {disease.capitalize()} Fact Sheet")
-        source_label = "who_live_scraper"
-    else:
-        # Fallback to local PDFs/texts if offline or scraped data is empty
-        chunks = _load_guidelines(lang)
-        source_label = "who_data_rag"
-    
+    chunks = _load_guidelines(lang)
+    source_label = "who_data_rag"
     
     # Construct a structured query matching the patient's state
     query = f"{disease} guidelines advice recommendations {risk_level} {patient.get('activity_level', '')} {patient.get('diet_quality', '')}"
