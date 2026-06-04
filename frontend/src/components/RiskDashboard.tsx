@@ -420,6 +420,13 @@ export default function RiskDashboard({
                     />
                   )}
 
+                  {/* Empty State Message */}
+                  {points.length < 2 && (
+                    <text x="250" y="100" textAnchor="middle" className="font-semibold text-xs fill-on-surface-variant/70">
+                      {currentT.noTimelineData}
+                    </text>
+                  )}
+
                   {/* Draw Nodes */}
                   {points.map((p, idx) => (
                     <g key={idx} className="cursor-pointer group" onClick={() => setSelectedHistoryIdx(idx)}>
