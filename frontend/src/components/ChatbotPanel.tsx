@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { 
   Send, 
-  Video, 
   ChevronLeft, 
   HelpCircle, 
   User, 
@@ -277,16 +276,6 @@ export default function ChatbotPanel({
                   <Send className="w-3.5 h-3.5 stroke-[2.5]" />
                 </button>
               </div>
-
-              {/* Speak with doctor trigger */}
-              <button 
-                onClick={() => alert(currentT.doctorAlert)}
-                className="bg-secondary text-on-secondary hover:bg-opacity-95 p-3 rounded-full font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm shrink-0 transition-transform active:scale-95"
-                title={currentT.doctorBtn}
-              >
-                <Video className="w-4 h-4" />
-                <span className="hidden sm:inline text-[11px]">{currentT.doctorBtn}</span>
-              </button>
             </div>
 
           </div>
