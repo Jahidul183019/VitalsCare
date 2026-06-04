@@ -37,8 +37,8 @@ app.add_middleware(
 
 _HASH_PREFIX = "sha256$"
 _USERNAME_MIN_LENGTH = 3
-_USERNAME_MAX_LENGTH = 20
-_USERNAME_PATTERN = re.compile(r"^[A-Za-z][A-Za-z0-9_]*$")
+_USERNAME_MAX_LENGTH = 100
+_USERNAME_PATTERN = re.compile(r"^[A-Za-z0-9_.@+-]+$")
 
 
 def _password_digest(password: str) -> str:
