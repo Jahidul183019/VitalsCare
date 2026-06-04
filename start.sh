@@ -12,6 +12,12 @@ trap cleanup SIGINT SIGTERM
 
 echo "🚀 Starting Community Health Risk Radar..."
 
+# Load local environment variables if local.env exists
+if [ -f "local.env" ]; then
+    echo "Loading environment variables from local.env..."
+    export $(grep -v '^#' local.env | xargs)
+fi
+
 # ==========================================
 # 1. Start the Python Backend
 # ==========================================

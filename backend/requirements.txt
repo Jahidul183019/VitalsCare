@@ -4,6 +4,8 @@ pydantic
 xgboost
 scikit-learn
 numpy
+pandas
+joblib
 pypdf
 sqlalchemy
 psycopg2-binary

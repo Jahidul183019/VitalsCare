@@ -18,3 +18,8 @@ frontend/dist/
 
 # Backup files
 *.save
+
+# Environment Variables
+.env
+.env.local
+local.env

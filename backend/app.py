@@ -14,7 +14,7 @@ try:
 except Exception:
     import db
 
-from ml_models import predict_risks
+from ml_models import predict_risks, get_model_info
 from rag_pipeline import get_who_recommendations
 from explainer import explain_risk
 from graph_engine import knowledge_graph
@@ -155,6 +155,12 @@ def debug_models():
         return {"error": resp.text, "status": resp.status_code}
     models = resp.json().get("models", [])
     return {"flash_models": [m["name"] for m in models if "flash" in m["name"]]}
+
+
+@app.get("/model/info")
+async def model_info():
+    """Returns dataset source, training accuracy, and sample count for each XGBoost model."""
+    return get_model_info()
 
 
 @app.post("/assess")
