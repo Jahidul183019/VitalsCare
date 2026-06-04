@@ -49,7 +49,7 @@ export default function AuthPanel({ lang, onNavigate, onLogin, onSignUp }: AuthP
       header: "Patient Space & Registries",
       desc: "Authenticate to manage separate clinic records, or customize your local patient identity and historic biomarkers.",
       authCardTitle: "Secure Patient Registry Access",
-      emailPh: "E.g. sarah@domain.com",
+      emailPh: "E.g. abc@domain.com",
       passPh: "Security Password",
       namePh: "Patient Display Name",
       loginTab: "Sign In",
@@ -153,7 +153,7 @@ export default function AuthPanel({ lang, onNavigate, onLogin, onSignUp }: AuthP
                       value={nameText}
                       onChange={(e) => setNameText(e.target.value)}
                       className="bg-background border border-outline-variant/50 focus:border-primary rounded-xl px-3.5 py-2.5 text-xs font-bold tracking-tight text-on-surface outline-none"
-                      placeholder="E.g. Sarah Jameel"
+                      placeholder="E.g. abc"
                     />
                   </div>
                 )}
