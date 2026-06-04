@@ -1,71 +1,58 @@
-# Health Risk Radar
+# VitalsCare v3.0 - Local AI
 
 Backend-plus-frontend prototype for Infinity AI BuildFest 2026.
 
-This project is a simple, explainable HealthTech demo for rural community screening. It includes authentication, a profile page, a landing page, an assessment form, and a dashboard that renders the backend's JSON response directly.
+This project is a comprehensive HealthTech demo for rural community screening. It includes authentication, a profile page, an assessment form, a risk insights dashboard, and a Gemini-powered conversational AI assistant.
+
+## New in v3.0
+
+- **XGBoost ML Classification**: Predicts risks for Hypertension, Diabetes, Cardiovascular Disease (CVD), and Malnutrition using real-world clinical datasets.
+- **Gemini Cloud LLM**: Provides personalized, culturally-aware health advice in both English and Bengali.
+- **RAG Pipeline**: Retrieves and utilizes clinical guidelines directly from WHO/DGHS documents to ground the AI's recommendations.
+- **Knowledge Graph**: Adds logical reasoning over the predicted risks to identify multi-morbidity interactions.
+- **Bilingual Support**: Full UI and AI responses support English and Bengali (বাংলা).
 
 ## Project Structure
 
 ```text
-Health-Risk-Radar/
+VitalsCare/
 ├── backend/
-│   ├── app.py
-│   ├── db.py
-│   ├── risk_engine.py
-│   ├── recommendations.json
-│   └── README.md
-└── frontend/
-  ├── src/
-  ├── vite.config.ts
-  └── README.md
+│   ├── app.py                 # Main FastAPI application
+│   ├── ml_models.py           # XGBoost training and inference
+│   ├── gemini_engine.py       # Gemini API integration (advice & chatbot)
+│   ├── rag_pipeline.py        # WHO guidelines retrieval
+│   ├── graph_engine.py        # Knowledge graph reasoning
+│   ├── scraper.py             # WHO data scraper
+│   ├── db.py                  # Database connection logic
+│   ├── datasets/              # Clinical datasets and trained .joblib models
+│   ├── who_data/              # Scraped WHO guidelines for RAG
+│   └── requirements.txt
+├── frontend/
+│   ├── src/                   # React components (Vite + TailwindCSS)
+│   ├── server.ts              # Express/Vite server for frontend
+│   ├── package.json
+│   └── vite.config.ts
+├── start.sh                   # Startup script for both servers
+└── local.env                  # Local environment variables (GEMINI_API_KEY)
 ```
 
 ## What the Backend Does
 
-- Exposes a FastAPI app with CORS enabled for local frontend access
-- Validates incoming patient data with Pydantic
-- Sends the data to the explainable scoring engine in `risk_engine.py`
-- Returns JSON containing risk level, color code, contributing factors, and recommendation
-- Handles login, register, profile update, password change, and logout endpoints
-- Uses PostgreSQL when `DATABASE_URL` is set, with SQLite fallback for local development
-
-## Risk Logic
-
-The scoring engine uses transparent, rule-based logic for:
-
-- Hypertension
-- Diabetes
-
-It also uses `recommendations.json` to map a primary condition and risk level to localized advice suitable for a community health worker in rural Bangladesh.
+- Exposes a **FastAPI** app with CORS enabled.
+- Runs patient data through the **XGBoost ML** models.
+- Queries the **RAG Pipeline** for relevant WHO guidelines based on predicted diseases.
+- Passes ML results and WHO guidelines to the **Gemini AI** to generate a final personalized recommendation.
+- Handles user authentication (login, register, session management) using SQLite (or PostgreSQL via `DATABASE_URL`).
+- Exposes a conversational `/chat` endpoint for the Health Agent.
 
 ## Frontend
 
-The `frontend/` folder contains the UI layer. It calls the backend through a Vite proxy and renders:
+The `frontend/` folder contains the React UI layer. It calls the backend via API and renders:
 
-- login and registration screens
-- landing page navigation
-- profile and logout flow
-- risk level
-- color-coded status
-- contributing factors
-- actionable recommendation
-
-### Frontend development
-
-From the `frontend/` folder:
-
-```bash
-npm install
-npm run dev
-```
-
-The Vite dev server runs on `http://localhost:3000/` and proxies `/api` to `http://127.0.0.1:8000`.
-
-To verify the frontend build:
-
-```bash
-npm run build
-```
+- Landing page and Authentication screens.
+- Clinical assessment form with dynamic field capture.
+- Risk Dashboard displaying color-coded results, contributing factors, and AI-generated advice.
+- Floating **Health Agent** chatbot.
 
 ## Local Setup
 
@@ -76,45 +63,30 @@ cd backend && pip install -r requirements.txt
 cd ../frontend && npm install
 ```
 
+Ensure you have a `.env` or `local.env` file with your Gemini API key:
+```env
+GEMINI_API_KEY=your_gemini_api_key_here
+```
+
 ## Run the App
 
 ```bash
 bash start.sh
 ```
 
-This starts both services:
+This starts both services concurrently:
 
-- Frontend: `http://localhost:3000/` or the next available Vite port if 3000 is busy
-- Backend: `http://127.0.0.1:8000/`
-
-If you want to run only the backend from the `backend/` folder, use:
-
-```bash
-uvicorn app:app --reload
-```
-
-If you want to run only the backend from the project root, use:
-
-```bash
-uvicorn backend.app:app --reload
-```
-
-The API will be available at:
-
-- `http://127.0.0.1:8000/health`
-- `http://127.0.0.1:8000/docs`
-- `http://127.0.0.1:8000/assess`
+- **Frontend**: `http://localhost:5173/` (or port 3000 depending on Vite/Node)
+- **Backend**: `http://127.0.0.1:8000/`
 
 ## Test the API
 
-Health check:
-
+**Health check:**
 ```bash
 curl http://127.0.0.1:8000/health
 ```
 
-Sample risk request:
-
+**Sample risk request:**
 ```bash
 curl -X POST http://127.0.0.1:8000/assess \
   -H 'Content-Type: application/json' \
@@ -125,24 +97,14 @@ curl -X POST http://127.0.0.1:8000/assess \
     "bmi": 29.4,
     "family_history": true,
     "activity_level": "low",
-    "diet_quality": "poor"
+    "diet_quality": "poor",
+    "lang": "en"
   }'
 ```
 
-## API Input Fields
-
-- `age`
-- `systolic_bp`
-- `diastolic_bp`
-- `bmi`
-- `family_history`
-- `activity_level` with values `low`, `medium`, or `high`
-- `diet_quality` with values `poor`, `average`, or `good`
-
 ## Notes
 
-- This is a prototype, not a clinical diagnostic tool.
-- The logic is intentionally simple and explainable for a hackathon demo.
-- The localized recommendation content is meant for community screening and should be reviewed with medical partners before real-world use.
-- The frontend posts to `/api/assess`, which Vite proxies to the backend `/assess` endpoint.
-- Set `DATABASE_URL` on Render or any Postgres host to enable the Postgres-backed runtime.
+- This is a prototype and **not a clinical diagnostic tool**.
+- The ML models use a combination of real Kaggle datasets and synthetic fallback data.
+- The Gemini AI responses are strictly for informational and screening awareness purposes.
+- Set `DATABASE_URL` to enable the Postgres-backed runtime in production environments.
