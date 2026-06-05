@@ -60,6 +60,31 @@ def _try_import_joblib():
         return None
 
 
+def _smart_sample(X, y, max_samples=20000):
+    """
+    Smart stratified sampling — keeps class balance
+    Much better than random sampling
+    """
+    if len(X) <= max_samples:
+        return X, y  # No sampling needed
+    
+    try:
+        from sklearn.model_selection import train_test_split
+        # Stratified = keeps same ratio of sick/healthy
+        _, X_sample, _, y_sample = train_test_split(
+            X, y,
+            test_size=max_samples/len(X),
+            stratify=y,      # ← KEY: keeps disease ratio
+            random_state=42
+        )
+        print(f"✂️ Stratified sample: {len(X)} → {len(X_sample)} rows")
+        return X_sample, y_sample
+    except:
+        # Random fallback
+        idx = np.random.choice(len(X), max_samples, replace=False)
+        return X[idx], y[idx]
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # DATASET 1 — Diabetes
 # ─────────────────────────────────────────────────────────────────────────────
@@ -559,6 +584,7 @@ def train_models() -> None:
                 print(f"[ml_models] ⚠️  Cache load failed for {disease}: {exc} — retraining")
 
         try:
+            X, y = _smart_sample(X, y, max_samples=20000)
             X_train, X_test, y_train, y_test = train_test_split(
                 X, y, test_size=0.2, random_state=42
             )
