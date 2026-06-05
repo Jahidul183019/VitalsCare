@@ -187,8 +187,8 @@ export default function RiskDashboard({
 out center 40;`;
 
       try {
-        // Switch to POST to avoid URI length drops or proxy filtering on deployed servers
-        const res = await fetch("https://overpass-api.de/api/interpreter", {
+        // Route through our Vercel rewrite / Vite proxy to bypass adblockers & CORS
+        const res = await fetch("/overpass/interpreter", {
           method: "POST",
           body: `data=${encodeURIComponent(query)}`,
           headers: { "Content-Type": "application/x-www-form-urlencoded" }
