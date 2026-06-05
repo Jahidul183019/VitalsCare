@@ -571,7 +571,7 @@ async def about():
             "early_detection_rate": "70-80% of at-risk individuals identified",
             "cost_per_screening": "BDT 2 vs BDT 500 for manual screening",
             "time_per_assessment": "< 3 minutes",
-            "accuracy": "85%+ across all 4 disease models",
+            "accuracy": "91-96%+ across all 4 disease models",
             "lives_impacted_year_1": "25,000+ patients screened"
         },
 
