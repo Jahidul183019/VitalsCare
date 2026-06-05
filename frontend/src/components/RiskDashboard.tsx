@@ -95,15 +95,7 @@ export default function RiskDashboard({
   const [geoStatus, setGeoStatus] = useState<"pending" | "granted" | "denied">("pending");
 
   // Fallback curated clinic list (shown while loading or if API fails)
-  const fallbackClinics: Clinic[] = [
-    { name: "Dhaka Medical College Hospital", address: "Secretariat Road, Dhaka", phone: "+880 2-55165088", hours: "Open 24 Hours", distance: "— km", coordinates: { lat: 23.7259, lng: 90.3976 } },
-    { name: "Evercare Hospital Dhaka", address: "Plot 81, Block E, Bashundhara R/A, Dhaka", phone: "10678", hours: "Open 24 Hours", distance: "— km", coordinates: { lat: 23.8105, lng: 90.4313 } },
-    { name: "Square Hospitals Ltd", address: "18/F Bir Uttam Qazi Nuruzzaman Sarak, Dhaka", phone: "10616", hours: "Open 24 Hours", distance: "— km", coordinates: { lat: 23.7530, lng: 90.3816 } },
-    { name: "Cumilla Medical College Hospital", address: "Kuchaitoli, Cumilla", phone: "+880 81-65122", hours: "Open 24 Hours", distance: "— km", coordinates: { lat: 23.4471, lng: 91.1924 } },
-    { name: "Chittagong Medical College Hospital", address: "K.B. Fazlul Kader Road, Chattogram", phone: "+880 31-619597", hours: "Open 24 Hours", distance: "— km", coordinates: { lat: 22.3610, lng: 91.8329 } },
-    { name: "Sylhet MAG Osmani Medical College", address: "Kajolshah, Sylhet", phone: "+880 821-713667", hours: "Open 24 Hours", distance: "— km", coordinates: { lat: 24.9015, lng: 91.8540 } },
-    { name: "Rajshahi Medical College Hospital", address: "Rajshahi", phone: "+880 721-772150", hours: "Open 24 Hours", distance: "— km", coordinates: { lat: 24.3746, lng: 88.5960 } }
-  ];
+  const fallbackClinics: Clinic[] = [];
 
   // Raw OSM clinic data (coordinates only, distances added after location resolves)
   const [rawOsmClinics, setRawOsmClinics] = useState<Clinic[]>([]);
