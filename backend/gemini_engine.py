@@ -3,14 +3,15 @@ import os
 import time
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip()
+CHATBOT_API_KEY = os.getenv("CHATBOT_API_KEY", GEMINI_API_KEY).strip()
 
 _GEMINI_URL = (
     "https://generativelanguage.googleapis.com/v1beta"
-    "/models/gemini-2.5-flash:generateContent"
+    "/models/gemini-2.0-flash:generateContent"
 )
 _GEMINI_MODEL_URL = (
     "https://generativelanguage.googleapis.com/v1beta"
-    "/models/gemini-2.5-flash"
+    "/models/gemini-2.0-flash"
 )
 
 MAX_RETRIES = 3
@@ -19,14 +20,15 @@ MAX_RETRIES = 3
 # =========================
 # INTERNAL RETRY HELPER
 # =========================
-def _call_gemini(payload: dict, timeout: int = 15) -> dict | None:
+def _call_gemini(payload: dict, timeout: int = 15, api_key: str = None, model: str = "gemini-2.0-flash") -> dict | None:
     """
     POST to the Gemini API with exponential-backoff retry on 429 / transient errors.
 
     Returns the parsed JSON response dict on success, or None after all retries fail.
     Raises ValueError for non-retryable API errors (4xx other than 429).
     """
-    url = f"{_GEMINI_URL}?key={GEMINI_API_KEY}"
+    key = api_key or GEMINI_API_KEY
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={key}"
 
     for attempt in range(MAX_RETRIES):
         try:
@@ -179,7 +181,7 @@ Max 150 words.
         ai_text = _extract_text(data)
         return {
             "ai_advice": ai_text,
-            "model": "gemini-2.5-flash",
+            "model": "gemini-2.0-flash",
             "language": lang,
             "status": "success",
         }
@@ -314,7 +316,7 @@ def chat_with_gemini(messages: list, lang: str = "en") -> str:
         "To see a dynamic response, you can launch the Screening Assessment program!"
     )
 
-    if not GEMINI_API_KEY:
+    if not CHATBOT_API_KEY:
         return _offline_bn if lang == "bn" else _offline_en
 
     # Map message history to Gemini format

@@ -29,7 +29,7 @@ export default async function handler(req: any, res: any) {
     }));
 
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-2.0-flash",
       contents: formattedContents,
       config: {
         systemInstruction: `You are VitalCare Assistant, an empathetic, highly specialized and professional medical information assistant for non-communicable disease (NCD) preventative screening (including diabetes, high blood pressure, CVD, diet, cardiac workloads, and lifestyle modifications) in Bangladesh. 
