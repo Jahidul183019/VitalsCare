@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   Heart, 
   Activity, 
@@ -72,14 +72,172 @@ export default function RiskDashboard({
   const completedCount = actions.filter(a => a.completed).length;
   const progressPercent = Math.round((completedCount / actions.length) * 100);
 
-  // Clinic dataset centered around specialized screening centers in Bangladesh
-  const clinicList: Clinic[] = [
-    { name: "City Health Screening Center", distance: "0.8 miles", hours: "Open until 8:00 PM", phone: "+880 1711-223344", address: "Dhaka Cantonment, Dhaka", coordinates: { lat: 23.8103, lng: 90.4125 } },
-    { name: "Shatkhira Specialized Preventative Hospital", distance: "2.4 miles", hours: "Open 24 Hours", phone: "+880 1711-998877", address: "Main Road, Shatkhira", coordinates: { lat: 22.7185, lng: 89.0705 } },
-    { name: "Banani Diagnostic Center for NCDs", distance: "1.5 miles", hours: "Open until 9:30 PM", phone: "+880 1722-114455", address: "Road 11, Banani, Dhaka", coordinates: { lat: 23.7940, lng: 90.4043 } },
-    { name: "Chittagong Preventive Cardiology Base", distance: "3.2 miles", hours: "Open until 7:00 PM", phone: "+880 1819-556677", address: "GEC Circle, Chittagong", coordinates: { lat: 22.3569, lng: 91.8122 } },
-    { name: "Sylhet Diabetes & Hypertension Screening Hub", distance: "4.7 miles", hours: "Open until 6:00 PM", phone: "+880 1912-778899", address: "Zindabazar, Sylhet", coordinates: { lat: 24.8949, lng: 91.8687 } }
-  ];
+  // ── OpenStreetMap / Overpass API Integration ──────────────────────────────
+  // Haversine formula to compute distance in km between two lat/lng pairs
+  const haversine = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
+    const R = 6371;
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLng = ((lng2 - lng1) * Math.PI) / 180;
+    const a =
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos((lat1 * Math.PI) / 180) *
+        Math.cos((lat2 * Math.PI) / 180) *
+        Math.sin(dLng / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  };
+
+  // Fallback centre if geolocation is denied / unavailable (Set to Cumilla for testing)
+  const FALLBACK_CENTER = { lat: 23.4607, lng: 91.1809 }; // Cumilla
+
+  // User's real GPS position (null until resolved)
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  // 'pending' | 'granted' | 'denied'
+  const [geoStatus, setGeoStatus] = useState<"pending" | "granted" | "denied">("pending");
+
+  // Fallback curated clinic list (shown while loading or if API fails)
+  const fallbackClinics: Clinic[] = [];
+
+  // Raw OSM clinic data (coordinates only, distances added after location resolves)
+  const [rawOsmClinics, setRawOsmClinics] = useState<Clinic[]>([]);
+  const [osmClinics, setOsmClinics] = useState<Clinic[]>(fallbackClinics);
+  const [isLoadingClinics, setIsLoadingClinics] = useState(true);
+  const [osmError, setOsmError] = useState(false);
+  const [isOsmData, setIsOsmData] = useState(false);
+
+  // Helper: attach real distances from a given origin and re-sort
+  const applyDistances = (
+    clinics: Clinic[],
+    origin: { lat: number; lng: number }
+  ): Clinic[] =>
+    clinics
+      .map((c) => ({
+        ...c,
+        distance: `${haversine(origin.lat, origin.lng, c.coordinates.lat, c.coordinates.lng).toFixed(1)} km`,
+      }))
+      .sort(
+        (a, b) =>
+          haversine(origin.lat, origin.lng, a.coordinates.lat, a.coordinates.lng) -
+          haversine(origin.lat, origin.lng, b.coordinates.lat, b.coordinates.lng)
+      );
+
+  // Step 1 — request GPS on mount
+  useEffect(() => {
+    if (!navigator.geolocation) {
+      setGeoStatus("denied");
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        setUserLocation(loc);
+        setGeoStatus("granted");
+      },
+      () => {
+        // Permission denied or unavailable — fall back
+        setGeoStatus("denied");
+      },
+      { timeout: 8000, maximumAge: 60000 }
+    );
+  }, []);
+
+  // Step 2 — fetch OSM clinics whenever geoStatus updates (so we have location if granted)
+  useEffect(() => {
+    if (geoStatus === "pending") return;
+
+    const fetchOsmClinics = async () => {
+      setIsLoadingClinics(true);
+      setOsmError(false);
+      
+      const lat = userLocation?.lat ?? FALLBACK_CENTER.lat;
+      const lng = userLocation?.lng ?? FALLBACK_CENTER.lng;
+
+      // Use a 15km radius (around:15000) for faster/leaner query
+      const query = `[out:json][timeout:15];
+(
+  node["amenity"~"hospital|clinic|doctors"]["name"](around:15000,${lat},${lng});
+  way["amenity"~"hospital|clinic|doctors"]["name"](around:15000,${lat},${lng});
+);
+out center 40;`;
+
+      try {
+        // GET request to avoid CORS Preflight/POST issues in browser
+        const res = await fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`);
+        
+        if (!res.ok) throw new Error("Overpass API error");
+        const json = await res.json();
+
+        const parsed: Clinic[] = (json.elements || [])
+          .filter((el: any) => {
+            const t = el.tags || {};
+            return t.name && t.name.trim().length > 2;
+          })
+          .map((el: any) => {
+            const t = el.tags || {};
+            const cLat: number = el.lat ?? el.center?.lat ?? lat;
+            const cLng: number = el.lon ?? el.center?.lon ?? lng;
+
+            const addrParts: string[] = [];
+            if (t["addr:housenumber"]) addrParts.push(t["addr:housenumber"]);
+            if (t["addr:street"]) addrParts.push(t["addr:street"]);
+            if (t["addr:suburb"]) addrParts.push(t["addr:suburb"]);
+            if (t["addr:city"]) addrParts.push(t["addr:city"]);
+            else if (t["addr:district"]) addrParts.push(t["addr:district"]);
+            const address =
+              addrParts.length > 0
+                ? addrParts.join(", ")
+                : t["is_in"] || t["addr:postcode"] || "Bangladesh";
+
+            const phone: string =
+              t["contact:phone"] || t["phone"] || t["contact:mobile"] || "N/A";
+
+            const rawHours: string = t["opening_hours"] || "";
+            let hours = "Hours not listed";
+            if (rawHours.toLowerCase().includes("24/7") || rawHours === "24/7") {
+              hours = "Open 24 Hours";
+            } else if (rawHours) {
+              hours = rawHours.length > 30 ? rawHours.slice(0, 30) + "…" : rawHours;
+            }
+
+            return {
+              name: t.name,
+              address,
+              phone,
+              hours,
+              distance: "— km",
+              coordinates: { lat: cLat, lng: cLng },
+            } as Clinic;
+          })
+          .filter((c: Clinic, i: number, arr: Clinic[]) =>
+            arr.findIndex((x: Clinic) => x.name === c.name) === i
+          );
+
+        if (parsed.length > 0) {
+          setRawOsmClinics(parsed);
+          setIsOsmData(true);
+        } else {
+          setOsmError(true);
+        }
+      } catch (err) {
+        console.error("Failed to fetch clinics", err);
+        setOsmError(true);
+      } finally {
+        setIsLoadingClinics(false);
+      }
+    };
+
+    fetchOsmClinics();
+  }, [geoStatus, userLocation]);
+
+  // Step 3 — whenever EITHER the raw clinics OR the user location changes,
+  //           recompute distances from the best available origin.
+  useEffect(() => {
+    if (rawOsmClinics.length === 0) return;
+    const origin = userLocation ?? FALLBACK_CENTER;
+    setOsmClinics(applyDistances(rawOsmClinics, origin));
+  }, [rawOsmClinics, userLocation]);
+
+  // The active clinic list — real OSM data or fallback
+  const clinicList = osmClinics;
 
   // Clinic searching and filtration system
   const [clinicSearch, setClinicSearch] = useState("");
@@ -90,7 +248,8 @@ export default function RiskDashboard({
     clinic.address.toLowerCase().includes(clinicSearch.toLowerCase())
   );
   
-  const activeClinic = filteredClinics[activeClinicIdx] || clinicList[0];
+  const defaultClinic: Clinic = { name: "No Clinic Found", distance: "0 km", hours: "-", phone: "-", address: "-", coordinates: { lat: 0, lng: 0 } };
+  const activeClinic = filteredClinics[activeClinicIdx] || clinicList[0] || defaultClinic;
 
   // Interactive Online Appointment Booking State
   const [selectedService, setSelectedService] = useState("CVD");
@@ -679,10 +838,61 @@ export default function RiskDashboard({
         {/* SECTION 3: Dedicated Bangladesh Clinic Locator, Booking list & Referral engine (Clinic Logic) */}
         <section id="clinic-and-referral-portal" className="bg-surface-container-lowest border border-outline-variant/40 rounded-3xl p-6 md:p-8 shadow-sm space-y-6">
           <div className="border-b border-outline-variant/20 pb-4">
-            <h3 className="text-lg md:text-xl font-bold tracking-tight text-on-surface flex items-center gap-2">
-              <MapPin className="w-5 h-5 text-primary" />
-              {currentT.clinicFinderTitle}
-            </h3>
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+              <h3 className="text-lg md:text-xl font-bold tracking-tight text-on-surface flex items-center gap-2">
+                <MapPin className="w-5 h-5 text-primary" />
+                {currentT.clinicFinderTitle}
+              </h3>
+              {/* Data source + location badges */}
+              <div className="flex flex-wrap items-center gap-1.5 shrink-0">
+
+                {/* Loading state */}
+                {isLoadingClinics && (
+                  <span className="text-[10px] text-on-surface-variant font-semibold flex items-center gap-1 animate-pulse">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block"></span>
+                    {lang === "EN" ? "Fetching live clinic data…" : "লাইভ ক্লিনিক তথ্য লোড হচ্ছে…"}
+                  </span>
+                )}
+
+                {/* GPS status badge — shown once clinics have loaded */}
+                {!isLoadingClinics && isOsmData && (
+                  <>
+                    {geoStatus === "pending" && (
+                      <span className="text-[9px] text-on-surface-variant font-semibold border border-outline-variant/30 rounded px-2 py-0.5 bg-surface-container flex items-center gap-1 animate-pulse">
+                        📡 {lang === "EN" ? "Locating you…" : "আপনার অবস্থান নির্ধারণ হচ্ছে…"}
+                      </span>
+                    )}
+                    {geoStatus === "granted" && (
+                      <span className="text-[9px] text-emerald-700 dark:text-emerald-400 font-semibold border border-emerald-400/40 rounded px-2 py-0.5 bg-emerald-50 dark:bg-emerald-950/20 flex items-center gap-1">
+                        📍 {lang === "EN" ? "Distances from your location" : "আপনার অবস্থান থেকে দূরত্ব"}
+                      </span>
+                    )}
+                    {geoStatus === "denied" && (
+                      <span className="text-[9px] text-on-surface-variant/60 font-semibold border border-outline-variant/30 rounded px-2 py-0.5 bg-surface-container flex items-center gap-1"
+                        title="Location permission denied — showing distances from Cumilla center">
+                        🏙 {lang === "EN" ? "From Cumilla" : "কুমিল্লা থেকে"}
+                      </span>
+                    )}
+                    <a
+                      href="https://www.openstreetmap.org/copyright"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[9px] text-on-surface-variant/60 hover:text-primary font-semibold border border-outline-variant/30 rounded px-2 py-0.5 bg-surface-container flex items-center gap-1 transition-colors"
+                      title="Map data © OpenStreetMap contributors"
+                    >
+                      🗺 OSM
+                    </a>
+                  </>
+                )}
+
+                {/* API error fallback notice */}
+                {!isLoadingClinics && osmError && (
+                  <span className="text-[9px] text-amber-600 font-semibold border border-amber-400/30 rounded px-2 py-0.5 bg-amber-50 dark:bg-amber-950/20 flex items-center gap-1">
+                    ⚠ {lang === "EN" ? "Using curated data (live unavailable)" : "সংরক্ষিত তথ্য ব্যবহার হচ্ছে"}
+                  </span>
+                )}
+              </div>
+            </div>
             <p className="text-xs text-on-surface-variant leading-relaxed mt-1">
               {lang === "EN" 
                 ? "Locate specialized preventative non-communicable screening clinics in your capital or divisional area. Lock an appointment to generate a digital referral code."
@@ -805,12 +1015,23 @@ export default function RiskDashboard({
                   )}
                 </div>
 
-                {/* Clinics Loop list */}
+                {/* Clinics Loop list — real OSM data or fallback */}
                 <div className="space-y-2.5 max-h-[320px] overflow-y-auto pr-1">
-                  {filteredClinics.length > 0 ? (
+                  {isLoadingClinics ? (
+                    // Loading skeleton
+                    Array.from({ length: 4 }).map((_, i) => (
+                      <div key={i} className="p-3.5 border border-outline-variant/20 rounded-xl animate-pulse bg-surface-container">
+                        <div className="flex justify-between items-center">
+                          <div className="h-3 w-2/3 bg-outline-variant/40 rounded"></div>
+                          <div className="h-3 w-12 bg-outline-variant/30 rounded"></div>
+                        </div>
+                        <div className="h-2.5 w-1/2 bg-outline-variant/25 rounded mt-2"></div>
+                      </div>
+                    ))
+                  ) : filteredClinics.length > 0 ? (
                     filteredClinics.map((clinic, idx) => (
                       <div 
-                        key={clinic.name}
+                        key={`${clinic.name}-${idx}`}
                         onClick={() => setActiveClinicIdx(idx)}
                         className={`p-3.5 border rounded-xl text-left cursor-pointer transition-all ${
                           activeClinic.name === clinic.name 
@@ -829,7 +1050,7 @@ export default function RiskDashboard({
                     ))
                   ) : (
                     <div className="text-center py-8 text-xs text-on-surface-variant font-medium">
-                      No screening center matches your query.
+                      {lang === "EN" ? "No screening center matches your query." : "কোনো স্ক্রীনিং সেন্টার পাওয়া যায়নি।"}
                     </div>
                   )}
                 </div>
