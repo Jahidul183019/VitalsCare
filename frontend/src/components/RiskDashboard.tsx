@@ -95,7 +95,9 @@ export default function RiskDashboard({
   const [geoStatus, setGeoStatus] = useState<"pending" | "granted" | "denied">("pending");
 
   // Fallback curated clinic list (shown while loading or if API fails)
-  const fallbackClinics: Clinic[] = [];
+  const fallbackClinics: Clinic[] = [
+    
+  ];
 
   // Raw OSM clinic data (coordinates only, distances added after location resolves)
   const [rawOsmClinics, setRawOsmClinics] = useState<Clinic[]>([]);
@@ -122,22 +124,41 @@ export default function RiskDashboard({
 
   // Step 1 — request GPS on mount
   useEffect(() => {
+    let resolved = false;
+
     if (!navigator.geolocation) {
       setGeoStatus("denied");
       return;
     }
+
+    // Force fallback if user ignores the browser prompt or it silently fails
+    const fallbackTimer = setTimeout(() => {
+      if (!resolved) {
+        setGeoStatus("denied");
+        resolved = true;
+      }
+    }, 5000);
+
     navigator.geolocation.getCurrentPosition(
       (pos) => {
+        if (resolved) return;
+        resolved = true;
+        clearTimeout(fallbackTimer);
         const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
         setUserLocation(loc);
         setGeoStatus("granted");
       },
       () => {
         // Permission denied or unavailable — fall back
+        if (resolved) return;
+        resolved = true;
+        clearTimeout(fallbackTimer);
         setGeoStatus("denied");
       },
       { timeout: 8000, maximumAge: 60000 }
     );
+
+    return () => clearTimeout(fallbackTimer);
   }, []);
 
   // Step 2 — fetch OSM clinics whenever geoStatus updates (so we have location if granted)
@@ -160,8 +181,12 @@ export default function RiskDashboard({
 out center 40;`;
 
       try {
-        // GET request to avoid CORS Preflight/POST issues in browser
-        const res = await fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`);
+        // Switch to POST to avoid URI length drops or proxy filtering on deployed servers
+        const res = await fetch("https://overpass-api.de/api/interpreter", {
+          method: "POST",
+          body: `data=${encodeURIComponent(query)}`,
+          headers: { "Content-Type": "application/x-www-form-urlencoded" }
+        });
         
         if (!res.ok) throw new Error("Overpass API error");
         const json = await res.json();
@@ -231,9 +256,9 @@ out center 40;`;
   // Step 3 — whenever EITHER the raw clinics OR the user location changes,
   //           recompute distances from the best available origin.
   useEffect(() => {
-    if (rawOsmClinics.length === 0) return;
     const origin = userLocation ?? FALLBACK_CENTER;
-    setOsmClinics(applyDistances(rawOsmClinics, origin));
+    const listToProcess = rawOsmClinics.length > 0 ? rawOsmClinics : fallbackClinics;
+    setOsmClinics(applyDistances(listToProcess, origin));
   }, [rawOsmClinics, userLocation]);
 
   // The active clinic list — real OSM data or fallback
