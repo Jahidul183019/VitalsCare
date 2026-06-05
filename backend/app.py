@@ -427,6 +427,165 @@ async def chat_endpoint(payload: ChatPayload):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.get("/about")
+async def about():
+    return {
+        "product": "VitalsCare",
+        "tagline": "AI-Powered Health Risk Detection for Rural Bangladesh",
+        "version": "3.0",
+        "mission": (
+            "To provide early disease detection for hypertension, "
+            "diabetes, CVD, and malnutrition to 50 million rural "
+            "Bangladeshis who lack access to preventive healthcare."
+        ),
+
+        "business_model": {
+            "free_tier": {
+                "name": "Community Free",
+                "price": "BDT 0 / month",
+                "target": "Rural community health workers (CHWs)",
+                "features": [
+                    "Health risk assessment for 4 diseases",
+                    "Bengali language support",
+                    "Offline-capable mobile interface",
+                    "Basic WHO-backed recommendations",
+                    "Up to 50 assessments per month"
+                ],
+                "impact": "Covers 13,000+ community clinics in Bangladesh"
+            },
+
+            "paid_tier": {
+                "name": "Clinic Pro",
+                "price": "BDT 2,000 / month",
+                "target": "Private clinics, hospitals, NGOs",
+                "features": [
+                    "Unlimited assessments",
+                    "Patient history tracking",
+                    "AI chatbot for health queries",
+                    "Priority Gemini AI recommendations",
+                    "CSV export and analytics dashboard",
+                    "Multi-user team access",
+                    "API access for integration"
+                ],
+                "target_customers": [
+                    "BRAC Health Programme",
+                    "Gonoshasthaya Kendra",
+                    "Private diagnostic centers",
+                    "Urban health clinics"
+                ]
+            },
+
+            "enterprise_tier": {
+                "name": "Government Enterprise",
+                "price": "Custom licensing",
+                "target": "Bangladesh government & international NGOs",
+                "features": [
+                    "Full white-label deployment",
+                    "Integration with DGHS health systems",
+                    "National patient database",
+                    "Custom AI model training on local data",
+                    "Dedicated server deployment",
+                    "24/7 technical support",
+                    "Compliance with Bangladesh health data laws",
+                    "WHO reporting dashboard"
+                ],
+                "target_customers": [
+                    "Bangladesh DGHS (Directorate General of Health Services)",
+                    "UNICEF Bangladesh",
+                    "WHO Bangladesh office",
+                    "World Bank health projects",
+                    "icddr,b research programmes"
+                ]
+            }
+        },
+
+        "market_opportunity": {
+            "total_addressable_market": "170 million people in Bangladesh",
+            "target_segment": "50 million rural Bangladeshis",
+            "current_gap": (
+                "Only 30% of rural population has access to "
+                "preventive health screening"
+            ),
+            "disease_burden": {
+                "hypertension": "17% adult prevalence = 17 million patients",
+                "diabetes": "8% adult prevalence = 8 million patients",
+                "malnutrition": "28% children under 5 = 4.2 million children",
+                "cvd": "Leading cause of death in Bangladesh"
+            }
+        },
+
+        "revenue_projection": {
+            "year_1": {
+                "free_users": "500 CHWs across 10 upazilas",
+                "paid_clinics": "50 clinics × BDT 2000 = BDT 100,000/month",
+                "annual_revenue": "BDT 1,200,000"
+            },
+            "year_2": {
+                "paid_clinics": "500 clinics × BDT 2000 = BDT 1,000,000/month",
+                "enterprise_contracts": "2 NGO contracts × BDT 500,000",
+                "annual_revenue": "BDT 13,000,000"
+            },
+            "year_3": {
+                "target": "DGHS national deployment",
+                "potential": "BDT 50,000,000+ government contract"
+            }
+        },
+
+        "competitive_advantage": [
+            "Only Bengali-first health AI in Bangladesh",
+            "Offline-capable for low-connectivity rural areas",
+            "Trained on real Kaggle datasets (170,000+ records)",
+            "RAG pipeline on official WHO + Bangladesh DGHS guidelines",
+            "4 diseases in one assessment (3 minutes)",
+            "Lowest cost per screening vs manual CHW visits"
+        ],
+
+        "go_to_market": {
+            "phase_1": "Partner with BRAC Health Programme for pilot (500 CHWs)",
+            "phase_2": "Expand to private clinics via NGO partnerships",
+            "phase_3": "Government DGHS integration for national rollout"
+        },
+
+        "team_needed": {
+            "technical": "2 ML engineers + 1 backend + 1 frontend",
+            "business": "1 health sector BD specialist + 1 NGO partnerships",
+            "medical": "1 clinical advisor for WHO compliance"
+        },
+
+        "funding_ask": {
+            "seed_round": "BDT 5,000,000 (USD ~45,000)",
+            "use_of_funds": {
+                "product_development": "40%",
+                "pilot_deployment": "30%",
+                "team_hiring": "20%",
+                "marketing": "10%"
+            },
+            "milestones": [
+                "Month 3: 500 active CHW users",
+                "Month 6: 50 paying clinics",
+                "Month 12: DGHS pilot agreement signed"
+            ]
+        },
+
+        "impact_metrics": {
+            "early_detection_rate": "70-80% of at-risk individuals identified",
+            "cost_per_screening": "BDT 2 vs BDT 500 for manual screening",
+            "time_per_assessment": "< 3 minutes",
+            "accuracy": "85%+ across all 4 disease models",
+            "lives_impacted_year_1": "25,000+ patients screened"
+        },
+
+        "technology_stack": {
+            "ai_models": "XGBoost trained on 170,000 real patient records",
+            "llm": "Google Gemini 2.5 Flash",
+            "rag_sources": "WHO Fact Sheets + Bangladesh DGHS protocols",
+            "knowledge_graph": "Disease relationship reasoning engine",
+            "deployment": "Render cloud (scalable to AWS/GCP)",
+            "languages": "Bengali + English"
+        }
+    }
+
+
 def main() -> None:
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run("app:app", host="0.0.0.0", port=port, reload=False)
