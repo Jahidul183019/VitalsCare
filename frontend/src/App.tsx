@@ -355,6 +355,7 @@ export default function App() {
       setView("dashboard");
     } catch (err) {
       console.error("Assessment submit failed:", err);
+      alert(lang === "EN" ? "Failed to analyze health data. Please check your inputs and try again." : "স্বাস্থ্য তথ্য বিশ্লেষণে ত্রুটি। অনুগ্রহ করে আপনার তথ্য চেক করে আবার চেষ্টা করুন।");
     } finally {
       setIsSubmitting(false);
     }
