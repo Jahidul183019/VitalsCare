@@ -323,7 +323,7 @@ export default function App() {
       
       const frontendResults = {
         ...results,
-        hypertensionRisk: results.condition_scores?.Hypertension ?? results.hypertensionRisk ?? 0,
+        hypertensionRisk: Math.max(results.condition_scores?.Hypertension || 0, results.condition_scores?.['Heart Disease'] || 0) || results.hypertensionRisk || 0,
         diabetesRisk: results.condition_scores?.Diabetes ?? results.diabetesRisk ?? 0,
         overallRisk: results.risk_score ?? results.overallRisk ?? 0,
         overallRiskLabel: results.risk_level ?? results.overallRiskLabel ?? "Medium",
