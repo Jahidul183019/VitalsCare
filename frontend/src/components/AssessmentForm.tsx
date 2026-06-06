@@ -317,6 +317,7 @@ export default function AssessmentForm({
                     type="number"
                     min="100"
                     max="250"
+                    step="any"
                     required
                     placeholder="175"
                     value={data.height || ""}
@@ -334,6 +335,7 @@ export default function AssessmentForm({
                     type="number"
                     min="30"
                     max="220"
+                    step="any"
                     required
                     placeholder="70"
                     value={data.weight || ""}
