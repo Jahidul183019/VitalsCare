@@ -40,7 +40,7 @@ const DEFAULT_ASSESSMENT: AssessmentData = {
   saltIntake: "medium",
   stressLevel: "medium",
   smoking: false,
-  gender: "female",
+  gender: "male",
   fastingBloodSugar: "normal",
   cholesterol: "normal",
   sleepDuration: "optimal",
