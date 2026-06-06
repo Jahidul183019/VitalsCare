@@ -113,10 +113,10 @@ def _init_db_on_startup():
 
 class PatientData(BaseModel):
     user_id: Optional[str] = "anonymous"
-    age: int
-    systolic_bp: float
-    diastolic_bp: float
-    bmi: float
+    age: int = 35
+    systolic_bp: float = 120.0
+    diastolic_bp: float = 80.0
+    bmi: float = 23.0
     family_history: bool = False
     activity_level: str = "medium"
     diet_quality: str = "average"
