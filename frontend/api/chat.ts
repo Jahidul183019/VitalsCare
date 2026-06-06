@@ -48,6 +48,14 @@ export default async function handler(req: any, res: any) {
     });
   } catch (err: any) {
     console.error("Gemini chat failed:", err.message);
+    
+    // Check if it's a Quota / Rate Limit issue
+    if (err.message && (err.message.includes("429") || err.message.toLowerCase().includes("quota"))) {
+      return res.status(200).json({
+        text: "I am currently receiving too many requests. Please wait a minute and try again!",
+      });
+    }
+
     return res.status(500).json({
       error: "AI service is currently unavailable. Please verify your CHATBOT_API_KEY settings.",
     });
