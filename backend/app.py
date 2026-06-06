@@ -144,19 +144,6 @@ def health_check():
         ]
     }
 
-@app.get("/debug-models")
-def debug_models():
-    import os, requests
-    key = os.environ.get("GEMINI_API_KEY")
-    if not key:
-        return {"error": "No API key on server"}
-    url = f"https://generativelanguage.googleapis.com/v1beta/models?key={key}"
-    resp = requests.get(url)
-    if resp.status_code != 200:
-        return {"error": resp.text, "status": resp.status_code}
-    models = resp.json().get("models", [])
-    return {"flash_models": [m["name"] for m in models if "flash" in m["name"]]}
-
 
 @app.get("/model/info")
 async def model_info():
