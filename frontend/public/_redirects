@@ -1,0 +1,3 @@
+/api/* https://health-risk-radar.onrender.com/:splat 200
+/overpass/* https://overpass-api.de/api/:splat 200
+/* /index.html 200
