@@ -259,10 +259,9 @@ export default function AssessmentForm({
                   {currentT.genderLabel}
                 </label>
                 <select
-                  value="male"
-                  disabled
+                  value={data.gender || "male"}
                   onChange={(e) => setData({ ...data, gender: e.target.value as any })}
-                  className="bg-surface-container-lowest border border-outline-variant/50 rounded-xl px-4 py-2.5 focus:outline-none focus:border-primary text-xs font-bold text-on-surface mt-1 opacity-70 cursor-not-allowed"
+                  className="bg-surface-container-lowest border border-outline-variant/50 rounded-xl px-4 py-2.5 focus:outline-none focus:border-primary text-xs font-bold text-on-surface mt-1"
                 >
                   <option value="female">{currentT.genderF}</option>
                   <option value="male">{currentT.genderM}</option>
