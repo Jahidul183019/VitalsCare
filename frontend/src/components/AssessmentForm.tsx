@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { 
-  Heart, 
-  Activity, 
-  ChevronLeft, 
-  FileText, 
-  Sparkles, 
-  Scale, 
+import {
+  Heart,
+  Activity,
+  ChevronLeft,
+  FileText,
+  Sparkles,
+  Scale,
   AlertCircle,
   HelpCircle,
   Apple,
@@ -33,7 +33,7 @@ export default function AssessmentForm({
   onSubmit,
   isSubmitting,
 }: AssessmentFormProps) {
-  
+
   // BMI classification state helper
   const [bmi, setBmi] = useState<number>(22.9);
   const [bmiClass, setBmiClass] = useState<string>("Normal");
@@ -45,7 +45,7 @@ export default function AssessmentForm({
       const hM = h / 100;
       const calculatedBmi = w / (hM * hM);
       setBmi(calculatedBmi);
-      
+
       if (calculatedBmi < 18.5) {
         setBmiClass(lang === "EN" ? "Underweight" : "আন্ডারওয়েট");
       } else if (calculatedBmi < 25) {
@@ -193,16 +193,16 @@ export default function AssessmentForm({
   return (
     <div className="min-h-screen text-on-surface bg-background py-8">
       <main className="max-w-4xl mx-auto px-4">
-        
+
         {/* Navigation back bar */}
         <div className="flex items-center justify-between mb-8">
-          <button 
+          <button
             onClick={() => onNavigate("landing")}
             className="flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline bg-surface-container/50 px-4 py-2 rounded-full duration-150"
           >
             <ChevronLeft className="w-4 h-4" /> {lang === "EN" ? "Back to Portal" : "পোর্টাল হোম"}
           </button>
-          
+
           <div className="text-xs font-bold text-on-surface-variant flex items-center gap-1 bg-surface-container rounded-full px-3 py-1">
             <span className="w-2.5 h-2.5 rounded-full bg-primary animate-pulse"></span>
             {lang === "EN" ? "Preventive Program Active" : "প্রতিরোধমূলক স্ক্রীনিং সক্রিয়"}
@@ -220,11 +220,11 @@ export default function AssessmentForm({
         </div>
 
         {/* Grid-based Bento Form parameters */}
-        <form 
-          onSubmit={(e) => { e.preventDefault(); onSubmit(); }} 
+        <form
+          onSubmit={(e) => { e.preventDefault(); onSubmit(); }}
           className="space-y-8"
         >
-          
+
           {/* Section 1: Physical Parameters Vitals */}
           <div className="bg-surface-container-lowest border border-outline-variant/40 rounded-3xl p-6 md:p-8 shadow-sm">
             <div className="flex items-center gap-3 border-b border-outline-variant/30 pb-4 mb-6">
@@ -236,14 +236,14 @@ export default function AssessmentForm({
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              
+
               {/* Age select slider */}
               <div className="flex flex-col gap-2 bg-background/50 border border-outline-variant/30 rounded-2xl p-4">
                 <label className="text-xs font-bold text-on-surface-variant uppercase tracking-wider flex justify-between">
                   <span>{currentT.ageLabel}</span>
                   <span className="text-primary text-sm font-extrabold">{data.age} {lang === "EN" ? "Years" : "বছর"}</span>
                 </label>
-                <input 
+                <input
                   type="range"
                   min="18"
                   max="100"
@@ -258,7 +258,7 @@ export default function AssessmentForm({
                 <label className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">
                   {currentT.genderLabel}
                 </label>
-                <select 
+                <select
                   value={data.gender || "female"}
                   onChange={(e) => setData({ ...data, gender: e.target.value as any })}
                   className="bg-surface-container-lowest border border-outline-variant/50 rounded-xl px-4 py-2.5 focus:outline-none focus:border-primary text-xs font-bold text-on-surface mt-1"
@@ -277,7 +277,7 @@ export default function AssessmentForm({
                 <div className="flex items-center gap-2 mt-1">
                   <div className="flex-grow flex items-center bg-surface-container-lowest border border-outline-variant/50 rounded-xl px-3 py-2 focus-within:border-primary">
                     <span className="text-[10px] font-bold text-on-surface-variant mr-1.5 uppercase select-none">SYS</span>
-                    <input 
+                    <input
                       type="number"
                       min="60"
                       max="250"
@@ -291,7 +291,7 @@ export default function AssessmentForm({
                   <span className="text-outline text-lg select-none">/</span>
                   <div className="flex-grow flex items-center bg-surface-container-lowest border border-outline-variant/50 rounded-xl px-3 py-2 focus-within:border-primary">
                     <span className="text-[10px] font-bold text-on-surface-variant mr-1.5 uppercase select-none">DIA</span>
-                    <input 
+                    <input
                       type="number"
                       min="40"
                       max="150"
@@ -307,13 +307,13 @@ export default function AssessmentForm({
 
               {/* Body Metrics: Height / Weight / BMI */}
               <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4 bg-background/50 border border-outline-variant/30 rounded-2xl p-4">
-                
+
                 {/* Height */}
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[10px] font-extrabold text-on-surface-variant uppercase tracking-wider">
                     {currentT.heightLabel}
                   </label>
-                  <input 
+                  <input
                     type="number"
                     min="100"
                     max="250"
@@ -330,7 +330,7 @@ export default function AssessmentForm({
                   <label className="text-[10px] font-extrabold text-on-surface-variant uppercase tracking-wider">
                     {currentT.weightLabel}
                   </label>
-                  <input 
+                  <input
                     type="number"
                     min="30"
                     max="220"
@@ -374,7 +374,7 @@ export default function AssessmentForm({
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              
+
               {/* Physical activity selector */}
               <div className="flex flex-col gap-2.5">
                 <label className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">
@@ -387,19 +387,18 @@ export default function AssessmentForm({
                     { val: "high", label: lang === "EN" ? "High Activity" : "উচ্চ সক্রিয়", desc: currentT.actHigh }
                   ].map((opts) => (
                     <label key={opts.val} className="cursor-pointer">
-                      <input 
-                        type="radio" 
+                      <input
+                        type="radio"
                         name="activityLevel"
                         value={opts.val}
                         checked={data.activityLevel === opts.val}
                         onChange={() => setData({ ...data, activityLevel: opts.val as any })}
                         className="sr-only"
                       />
-                      <div className={`p-3.5 rounded-xl border text-left transition-all ${
-                        data.activityLevel === opts.val
+                      <div className={`p-3.5 rounded-xl border text-left transition-all ${data.activityLevel === opts.val
                           ? "bg-primary-container/10 border-primary text-primary font-bold shadow-sm"
                           : "bg-background/20 border-outline-variant/50 hover:bg-background/45 text-on-surface-variant"
-                      }`}>
+                        }`}>
                         <div className="text-xs font-bold font-sans">{opts.label}</div>
                         <div className="text-[11px] opacity-80 mt-0.5 font-normal">{opts.desc}</div>
                       </div>
@@ -410,7 +409,7 @@ export default function AssessmentForm({
 
               {/* Diet Quality & Salt Prefs */}
               <div className="flex flex-col gap-6">
-                
+
                 {/* Diet Quality dropdown or picker */}
                 <div className="flex flex-col gap-2">
                   <label className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">
@@ -423,7 +422,7 @@ export default function AssessmentForm({
                       { val: "good", label: lang === "EN" ? "Good Diet" : "পুষ্টিসমৃদ্ধ কাস্টম খাদ্য", desc: currentT.dietGood }
                     ].map((opts) => (
                       <label key={opts.val} className="cursor-pointer">
-                        <input 
+                        <input
                           type="radio"
                           name="dietQuality"
                           value={opts.val}
@@ -431,11 +430,10 @@ export default function AssessmentForm({
                           onChange={() => setData({ ...data, dietQuality: opts.val as any })}
                           className="sr-only"
                         />
-                        <div className={`p-3.5 rounded-xl border text-left transition-all ${
-                          data.dietQuality === opts.val
+                        <div className={`p-3.5 rounded-xl border text-left transition-all ${data.dietQuality === opts.val
                             ? "bg-primary-container/10 border-primary text-primary font-bold shadow-sm"
                             : "bg-background/20 border-outline-variant/50 hover:bg-background/45 text-on-surface-variant"
-                        }`}>
+                          }`}>
                           <div className="text-xs font-bold">{opts.label}</div>
                           <div className="text-[11px] opacity-80 mt-0.5 font-normal">{opts.desc}</div>
                         </div>
@@ -448,13 +446,13 @@ export default function AssessmentForm({
 
               {/* Micro-Parameters: Salt / Stress / Smoking / FBS / Cholesterol / Sleep / Alcohol */}
               <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 pt-4 border-t border-outline-variant/30">
-                
+
                 {/* Salt Intake Preference */}
                 <div className="flex flex-col gap-2">
                   <label className="text-[10px] font-extrabold text-on-surface-variant uppercase tracking-wider">
                     {currentT.saltLabel}
                   </label>
-                  <select 
+                  <select
                     value={data.saltIntake}
                     onChange={(e) => setData({ ...data, saltIntake: e.target.value as any })}
                     className="bg-surface-container-lowest border border-outline-variant/50 rounded-xl px-4 py-2.5 focus:outline-none focus:border-primary text-xs font-bold text-on-surface"
@@ -470,7 +468,7 @@ export default function AssessmentForm({
                   <label className="text-[10px] font-extrabold text-on-surface-variant uppercase tracking-wider">
                     {currentT.fbsLabel}
                   </label>
-                  <select 
+                  <select
                     value={data.fastingBloodSugar || "normal"}
                     onChange={(e) => setData({ ...data, fastingBloodSugar: e.target.value as any })}
                     className="bg-surface-container-lowest border border-outline-variant/50 rounded-xl px-4 py-2.5 focus:outline-none focus:border-primary text-xs font-bold text-on-surface"
@@ -486,7 +484,7 @@ export default function AssessmentForm({
                   <label className="text-[10px] font-extrabold text-on-surface-variant uppercase tracking-wider">
                     {currentT.cholLabel}
                   </label>
-                  <select 
+                  <select
                     value={data.cholesterol || "normal"}
                     onChange={(e) => setData({ ...data, cholesterol: e.target.value as any })}
                     className="bg-surface-container-lowest border border-outline-variant/50 rounded-xl px-4 py-2.5 focus:outline-none focus:border-primary text-xs font-bold text-on-surface"
@@ -502,7 +500,7 @@ export default function AssessmentForm({
                   <label className="text-[10px] font-extrabold text-on-surface-variant uppercase tracking-wider">
                     {currentT.sleepLabel}
                   </label>
-                  <select 
+                  <select
                     value={data.sleepDuration || "optimal"}
                     onChange={(e) => setData({ ...data, sleepDuration: e.target.value as any })}
                     className="bg-surface-container-lowest border border-outline-variant/50 rounded-xl px-4 py-2.5 focus:outline-none focus:border-primary text-xs font-bold text-on-surface"
@@ -517,7 +515,7 @@ export default function AssessmentForm({
                   <label className="text-[10px] font-extrabold text-on-surface-variant uppercase tracking-wider">
                     {currentT.alcoholLabel}
                   </label>
-                  <select 
+                  <select
                     value={data.alcohol || "never"}
                     onChange={(e) => setData({ ...data, alcohol: e.target.value as any })}
                     className="bg-surface-container-lowest border border-outline-variant/50 rounded-xl px-4 py-2.5 focus:outline-none focus:border-primary text-xs font-bold text-on-surface"
@@ -533,7 +531,7 @@ export default function AssessmentForm({
                   <label className="text-[10px] font-extrabold text-on-surface-variant uppercase tracking-wider">
                     {currentT.stressTitle}
                   </label>
-                  <select 
+                  <select
                     value={data.stressLevel}
                     onChange={(e) => setData({ ...data, stressLevel: e.target.value as any })}
                     className="bg-surface-container-lowest border border-outline-variant/50 rounded-xl px-4 py-2.5 focus:outline-none focus:border-primary text-xs font-bold text-on-surface"
@@ -551,7 +549,7 @@ export default function AssessmentForm({
                   </label>
                   <div className="flex items-center gap-4 mt-2">
                     <label className="flex items-center gap-1.5 cursor-pointer">
-                      <input 
+                      <input
                         type="checkbox"
                         checked={data.smoking}
                         onChange={(e) => setData({ ...data, smoking: e.target.checked })}
@@ -591,20 +589,18 @@ export default function AssessmentForm({
                   { key: "stroke", label: currentT.fhSt },
                   { key: "heartDisease", label: currentT.fhHd }
                 ].map((item) => (
-                  <div 
+                  <div
                     key={item.key}
                     onClick={() => handleCheckbox(item.key as any)}
-                    className={`flex items-center gap-3 p-4 rounded-xl border cursor-pointer select-none transition-all ${
-                      data.familyHistory[item.key as keyof AssessmentData["familyHistory"]]
+                    className={`flex items-center gap-3 p-4 rounded-xl border cursor-pointer select-none transition-all ${data.familyHistory[item.key as keyof AssessmentData["familyHistory"]]
                         ? "bg-primary-container/15 border-primary text-primary font-bold shadow-sm"
                         : "bg-background/25 border-outline-variant/50 hover:bg-background/45 text-on-surface-variant"
-                    }`}
+                      }`}
                   >
-                    <div className={`w-5 h-5 rounded border flex items-center justify-center ${
-                      data.familyHistory[item.key as keyof AssessmentData["familyHistory"]]
+                    <div className={`w-5 h-5 rounded border flex items-center justify-center ${data.familyHistory[item.key as keyof AssessmentData["familyHistory"]]
                         ? "bg-primary border-primary text-on-primary"
                         : "border-outline-variant bg-surface"
-                    }`}>
+                      }`}>
                       {data.familyHistory[item.key as keyof AssessmentData["familyHistory"]] && (
                         <Check className="w-3.5 h-3.5 stroke-[4]" />
                       )}
@@ -618,14 +614,14 @@ export default function AssessmentForm({
 
           {/* Action Trigger Buttons */}
           <div className="flex gap-4 items-center justify-end mt-8">
-            <button 
+            <button
               type="button"
               onClick={() => onNavigate("landing")}
               className="bg-surface-container hover:bg-surface-container-high text-on-surface-variant px-6 py-3 rounded-full font-bold text-sm tracking-tight transition-all active:scale-95"
             >
               {currentT.cancel}
             </button>
-            <button 
+            <button
               type="submit"
               disabled={isSubmitting}
               id="submit-screening-assessment-flow"
