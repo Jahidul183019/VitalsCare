@@ -9,7 +9,7 @@ import bcrypt
 import uvicorn
 import os
 
-
+ 
 try:
     from . import db
 except Exception:
