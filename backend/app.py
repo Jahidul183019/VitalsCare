@@ -247,13 +247,24 @@ async def assess(patient: PatientData):
         if not primary_recommendation:
             primary_recommendation = dominant_data.get("recommendation", "")
 
-        # Save to assessment history if user is authenticated
-        if user_id and str(user_id).lower() != "anonymous":
-            try:
-                uid = int(user_id)
-                db.save_assessment(uid, patient_dict, risk_scores)
-            except ValueError:
-                pass  # Ignore if user_id is not a valid integer
+       # Replace the save block with this:
+       if user_id and str(user_id).lower() != "anonymous":
+        try:
+        # If it's already an int string
+        actual_uid = int(user_id)
+        except ValueError:
+        # It's an email — find the user
+        user_row = db.get_user_by_username(user_id)
+        actual_uid = user_row["id"] if user_row else None
+    
+    if actual_uid:
+        try:
+            db.save_assessment(
+                actual_uid, patient_dict, risk_scores
+            )
+            print(f"Assessment saved for user {actual_uid}")
+        except Exception as e:
+            print(f"[assess] Save failed: {e}")
 
         return {
             "status": "success",
