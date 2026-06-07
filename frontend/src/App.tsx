@@ -53,6 +53,9 @@ export default function App() {
   const [theme, setTheme] = useState<"light" | "dark">("light");
   
   const [activeEmail, setActiveEmail] = useState<string>("");
+  // NEW: store username separately for backend user_id lookup
+  const [activeUsername, setActiveUsername] = useState<string>("");
+
   const [usersDb, setUsersDb] = useState<{ [key: string]: any }>(() => {
     const saved = localStorage.getItem("vitalcare_accounts");
     if (saved) {
@@ -70,6 +73,17 @@ export default function App() {
   const [riskResults, setRiskResults] = useState<any>(null);
   const [assessmentHistory, setAssessmentHistory] = useState<any[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Restore session on mount
+  useEffect(() => {
+    const token = localStorage.getItem("vitalcare_auth_token");
+    const savedUsername = localStorage.getItem("vitalcare_username");
+    const savedEmail = localStorage.getItem("vitalcare_email");
+    if (token && savedUsername && savedEmail) {
+      setActiveUsername(savedUsername);
+      setActiveEmail(savedEmail);
+    }
+  }, []);
 
   // Sync active states whenever changing accounts
   useEffect(() => {
@@ -119,14 +133,20 @@ export default function App() {
         if (response.status === 401) {
            return lang === "EN" 
              ? "Incorrect security credentials password configuration." 
-             : "ভুল পাসওয়ার্ড বা ইমেইল দেওয়া হয়েছে, পুনরায় চেষ্টা করুন।";
+             : "ভুল পাসওয়ার্ড বা ইমেইল দেওয়া হয়েছে, পুনরায় চেষ্টা করুন।";
         }
         return lang === "EN" ? "Login failed due to server error." : "সার্ভার সমস্যার কারণে লগইন ব্যর্থ হয়েছে।";
       }
       
       const data = await response.json();
-      // Store token in local storage
+
+      // Store token + username + email in localStorage
       localStorage.setItem("vitalcare_auth_token", data.token);
+      localStorage.setItem("vitalcare_username", data.username);
+      localStorage.setItem("vitalcare_email", formattedEmail);
+
+      // FIX: store username for user_id in assessments
+      setActiveUsername(data.username);
       setActiveEmail(formattedEmail);
       
       // Ensure local user DB has an entry for state syncing
@@ -160,7 +180,7 @@ export default function App() {
       return lang === "EN" ? "Invalid email address format." : "অনুগ্রহ করে একটি সঠিক ইমেইল প্রদান করুন।";
     }
     if (pass.length < 5) {
-      return lang === "EN" ? "Password must contain at least 5 letters." : "পাসওয়ার্ড অবশ্যই কমপক্ষে ৫ অক্ষরের হতে হবে।";
+      return lang === "EN" ? "Password must contain at least 5 letters." : "পাসওয়ার্ড অবশ্যই কমপক্ষে ৫ অক্ষরের হতে হবে।";
     }
 
     try {
@@ -174,13 +194,20 @@ export default function App() {
         if (response.status === 400) {
            return lang === "EN" 
             ? "An account is already configured with this email or username invalid." 
-            : "এই ইমেইল অ্যাকাউন্টটি দিয়ে ইতিমধ্যেই একটি প্রোফাইল তৈরি করা আছে বা নাম অবৈধ।";
+            : "এই ইমেইল অ্যাকাউন্টটি দিয়ে ইতিমধ্যেই একটি প্রোফাইল তৈরি করা আছে বা নাম অবৈধ।";
         }
         return lang === "EN" ? "Registration failed due to server error." : "সার্ভার সমস্যার কারণে নিবন্ধন ব্যর্থ হয়েছে।";
       }
 
       const data = await response.json();
+
+      // Store token + username + email
       localStorage.setItem("vitalcare_auth_token", data.token);
+      localStorage.setItem("vitalcare_username", data.username);
+      localStorage.setItem("vitalcare_email", formattedEmail);
+
+      // FIX: store username for user_id in assessments
+      setActiveUsername(data.username);
 
       const newDb = {
         ...usersDb,
@@ -214,7 +241,10 @@ export default function App() {
       }
     }
     localStorage.removeItem("vitalcare_auth_token");
+    localStorage.removeItem("vitalcare_username");
+    localStorage.removeItem("vitalcare_email");
     setActiveEmail("");
+    setActiveUsername("");
   };
 
   // Initialize light/dark theme class on mount and update
@@ -229,7 +259,6 @@ export default function App() {
 
   // Initial risk computation local baseline on mount
   useEffect(() => {
-    // Post initial data to populate the dashboard immediately if no results preloaded
     const fetchInitialRisk = async () => {
       if (activeEmail && usersDb[activeEmail]?.riskResults) {
         setRiskResults(usersDb[activeEmail].riskResults);
@@ -241,7 +270,8 @@ export default function App() {
         const hasFamilyHistory = DEFAULT_ASSESSMENT.familyHistory.diabetes || DEFAULT_ASSESSMENT.familyHistory.hypertension || DEFAULT_ASSESSMENT.familyHistory.stroke || DEFAULT_ASSESSMENT.familyHistory.heartDisease;
         
         const payload = {
-          user_id: activeEmail || "anonymous",
+          // FIX: use activeUsername for backend user_id
+          user_id: activeUsername || activeEmail || "anonymous",
           age: DEFAULT_ASSESSMENT.age,
           systolic_bp: DEFAULT_ASSESSMENT.systolic,
           diastolic_bp: DEFAULT_ASSESSMENT.diastolic,
@@ -281,9 +311,9 @@ export default function App() {
       }
     };
     fetchInitialRisk();
-  }, [activeEmail]);
+  }, [activeEmail, activeUsername]);
 
-  // Form submission handler to fetch server/local risk evaluation
+  // Form submission handler
   const handleAssessmentSubmit = async () => {
     setIsSubmitting(true);
     try {
@@ -292,7 +322,8 @@ export default function App() {
       const hasFamilyHistory = assessmentData.familyHistory.diabetes || assessmentData.familyHistory.hypertension || assessmentData.familyHistory.stroke || assessmentData.familyHistory.heartDisease;
       
       const payload = {
-        user_id: activeEmail || "anonymous",
+        // FIX: use activeUsername for backend user_id so history saves correctly
+        user_id: activeUsername || activeEmail || "anonymous",
         age: assessmentData.age,
         systolic_bp: assessmentData.systolic,
         diastolic_bp: assessmentData.diastolic,
@@ -428,7 +459,7 @@ export default function App() {
                   : "text-on-surface-variant hover:bg-surface-container"
               }`}
             >
-              {lang === "EN" ? "Health Agent" : "এআই সহায়ক"}
+              {lang === "EN" ? "Health Agent" : "এআই সহায়ক"}
             </button>
           </nav>
 
@@ -462,10 +493,10 @@ export default function App() {
               title="Health Profile Settings"
             >
               <div className="w-8 h-8 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold text-sm tracking-tight">
-            {activeEmail ? profileInitials : <User className="w-4 h-4" />}
+                {activeEmail ? profileInitials : <User className="w-4 h-4" />}
               </div>
               <span className="hidden md:inline text-xs font-bold text-on-surface pr-1.5 select-none hover:underline">
-            {activeEmail ? profileName : (lang === "EN" ? "Sign In" : "লগ ইন")}
+                {activeEmail ? profileName : (lang === "EN" ? "Sign In" : "লগ ইন")}
               </span>
             </div>
 
@@ -539,13 +570,13 @@ export default function App() {
         )}
       </div>
 
-      {/* Universal Sticky AI Chatbot FAB Action representation */}
+      {/* Universal Sticky AI Chatbot FAB */}
       {view !== "chat" && (
         <div className="fixed bottom-24 right-5 md:bottom-8 md:right-8 z-50">
           <button 
             onClick={() => setView("chat")}
             className="w-14 h-14 md:w-16 md:h-16 bg-primary text-on-primary rounded-full shadow-2xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all group relative border border-on-primary/10"
-            title={lang === "EN" ? "Chat with AI" : "এআই সহায়ক চ্যাট"}
+            title={lang === "EN" ? "Chat with AI" : "এআই সহায়ক চ্যাট"}
           >
             <MessageSquare className="w-6 h-6 md:w-7 md:h-7 stroke-[2.5]" />
             <span className="absolute right-full mr-3 bg-inverse-surface text-inverse-on-surface px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-md">
@@ -555,7 +586,7 @@ export default function App() {
         </div>
       )}
 
-      {/* Footer block (Desktop only) */}
+      {/* Footer (Desktop only) */}
       <footer className="hidden md:block w-full py-8 border-t border-outline-variant/35 bg-surface-container-lowest">
         <div className="max-w-7xl mx-auto px-4 md:px-8 flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex items-center gap-2 group cursor-pointer" onClick={() => setView("landing")}>
@@ -583,10 +614,9 @@ export default function App() {
         </div>
       </footer>
 
-      {/* Universal Mobile Bottom Navigation Bar conforming exactly to the user xpaths */}
+      {/* Mobile Bottom Navigation */}
       <nav className="md:hidden fixed bottom-0 left-0 w-full flex justify-around items-center h-20 bg-surface border-t border-outline-variant/35 px-2 pb-safe z-40 shadow-lg">
         
-        {/* Home target */}
         <button 
           onClick={() => setView("landing")}
           className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${
@@ -597,7 +627,6 @@ export default function App() {
           <span className="text-[10px] font-bold mt-1">{lang === "EN" ? "Home" : "হোম"}</span>
         </button>
 
-        {/* Assess Form target */}
         <button 
           onClick={() => setView("assess")}
           className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${
@@ -608,7 +637,6 @@ export default function App() {
           <span className="text-[10px] font-bold mt-1">{lang === "EN" ? "Assess" : "স্ক্রীনিং"}</span>
         </button>
 
-        {/* Dashboard target */}
         <button 
           onClick={() => setView("dashboard")}
           className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${
@@ -619,7 +647,6 @@ export default function App() {
           <span className="text-[10px] font-bold mt-1">{lang === "EN" ? "Risks" : "ঝুঁকি"}</span>
         </button>
 
-        {/* Chatbot target */}
         <button 
           onClick={() => setView("chat")}
           className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${
@@ -627,10 +654,9 @@ export default function App() {
           }`}
         >
           <MessageSquare className="w-5 h-5" />
-          <span className="text-[10px] font-bold mt-1">{lang === "EN" ? "Agent" : "সহায়ক"}</span>
+          <span className="text-[10px] font-bold mt-1">{lang === "EN" ? "Agent" : "সহায়ক"}</span>
         </button>
 
-        {/* Profile target */}
         <button 
           onClick={() => setView("profile")}
           className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${
