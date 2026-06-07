@@ -14,6 +14,7 @@ import {
   Sparkles
 } from "lucide-react";
 import { AssessmentData, ViewType } from "../types";
+import AssessmentHistory from "./AssessmentHistory";
 
 interface ProfilePanelProps {
   lang: "EN" | "BN";
@@ -37,6 +38,8 @@ export default function ProfilePanel({
   
   const [tempName, setTempName] = useState(profileName);
   const [savedSuccess, setSavedSuccess] = useState(false);
+
+  const token = localStorage.getItem("vitalcare_auth_token");
 
   useEffect(() => {
     setTempName(profileName);
@@ -264,6 +267,11 @@ export default function ProfilePanel({
                 </div>
               ))}
             </div>
+          </div>
+
+          {/* Card 4: Assessment History (Spans 12 columns) */}
+          <div className="col-span-1 md:col-span-12">
+            <AssessmentHistory token={token} lang={lang} />
           </div>
 
         </div>

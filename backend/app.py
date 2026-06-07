@@ -247,6 +247,14 @@ async def assess(patient: PatientData):
         if not primary_recommendation:
             primary_recommendation = dominant_data.get("recommendation", "")
 
+        # Save to assessment history if user is authenticated
+        if user_id and str(user_id).lower() != "anonymous":
+            try:
+                uid = int(user_id)
+                db.save_assessment(uid, patient_dict, risk_scores)
+            except ValueError:
+                pass  # Ignore if user_id is not a valid integer
+
         return {
             "status": "success",
             "language": lang,
@@ -337,6 +345,12 @@ def logout(token: Optional[str] = Header(None)):
 @app.get('/auth/me')
 def get_my_profile(user=Depends(_require_user)):
     return { 'username': user['username'], 'name': user.get('name'), 'id': user['id'] }
+
+
+@app.get('/auth/me/history')
+def get_my_history(user=Depends(_require_user)):
+    history = db.get_assessment_history(user['id'])
+    return { 'history': history }
 
 
 class UpdateProfilePayload(BaseModel):

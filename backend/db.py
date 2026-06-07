@@ -2,6 +2,7 @@ import os
 import sqlite3
 from pathlib import Path
 import time
+import json
 from typing import Optional
 
 DATABASE_URL = os.environ.get('DATABASE_URL')
@@ -67,6 +68,17 @@ def init_db() -> None:
                 FOREIGN KEY(user_id) REFERENCES users(id)
             )
             ''')
+        cur.execute(
+            '''
+            CREATE TABLE IF NOT EXISTS assessment_history (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER NOT NULL,
+                patient_data TEXT NOT NULL,
+                risk_scores TEXT NOT NULL,
+                created_at BIGINT NOT NULL,
+                FOREIGN KEY(user_id) REFERENCES users(id)
+            )
+            ''')
     else:
         cur.execute(
             '''
@@ -83,6 +95,17 @@ def init_db() -> None:
                 token TEXT PRIMARY KEY,
                 user_id INTEGER NOT NULL,
                 expires_at INTEGER NOT NULL,
+                FOREIGN KEY(user_id) REFERENCES users(id)
+            )
+            ''')
+        cur.execute(
+            '''
+            CREATE TABLE IF NOT EXISTS assessment_history (
+                id INTEGER PRIMARY KEY,
+                user_id INTEGER NOT NULL,
+                patient_data TEXT NOT NULL,
+                risk_scores TEXT NOT NULL,
+                created_at INTEGER NOT NULL,
                 FOREIGN KEY(user_id) REFERENCES users(id)
             )
             ''')
@@ -106,6 +129,51 @@ def create_session(token: str, user_id: int, ttl_seconds: int = 7 * 24 * 3600) -
         cur.execute('INSERT OR REPLACE INTO sessions(token, user_id, expires_at) VALUES (?,?,?)', (token, user_id, expires))
     conn.commit()
     conn.close()
+
+
+def save_assessment(user_id: int, patient_data: dict, risk_scores: dict) -> None:
+    conn = get_conn()
+    created_at = int(time.time())
+    p_data_str = json.dumps(patient_data)
+    r_scores_str = json.dumps(risk_scores)
+    if _USE_POSTGRES:
+        cur = conn.cursor()
+        cur.execute(
+            'INSERT INTO assessment_history(user_id, patient_data, risk_scores, created_at) VALUES (%s, %s, %s, %s)',
+            (user_id, p_data_str, r_scores_str, created_at)
+        )
+    else:
+        cur = conn.cursor()
+        cur.execute(
+            'INSERT INTO assessment_history(user_id, patient_data, risk_scores, created_at) VALUES (?, ?, ?, ?)',
+            (user_id, p_data_str, r_scores_str, created_at)
+        )
+    conn.commit()
+    conn.close()
+
+
+def get_assessment_history(user_id: int):
+    conn = get_conn()
+    if _USE_POSTGRES:
+        import psycopg2.extras
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute('SELECT * FROM assessment_history WHERE user_id = %s ORDER BY created_at DESC', (user_id,))
+        rows = cur.fetchall()
+    else:
+        cur = conn.cursor()
+        cur.execute('SELECT * FROM assessment_history WHERE user_id = ? ORDER BY created_at DESC', (user_id,))
+        rows = cur.fetchall()
+    conn.close()
+    
+    results = []
+    for row in rows:
+        r = dict(row)
+        if isinstance(r.get('patient_data'), str):
+            r['patient_data'] = json.loads(r['patient_data'])
+        if isinstance(r.get('risk_scores'), str):
+            r['risk_scores'] = json.loads(r['risk_scores'])
+        results.append(r)
+    return results
 
 
 def get_user_by_username(username: str):
