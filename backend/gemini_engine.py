@@ -303,9 +303,10 @@ def chat_with_gemini(messages: list, lang: str = "en") -> str:
 
     if lang == "bn":
         system_instruction += (
-            "\n- If the user asks in Bengali (বাংলা), respond in perfect, "
-            "warm and natural Bengali. E.g., using polite 'আপনি' address."
+            "\n- Respond entirely in perfect, warm and natural Bengali (বাংলা). E.g., using polite 'আপনি' address."
         )
+    else:
+        system_instruction += "\n- Respond entirely in English."
 
     _offline_bn = (
         "আমি বর্তমানে অফলাইন মুডে চলছি কারণ সার্ভার সম্পূর্ণ লোড হচ্ছে। "

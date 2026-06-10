@@ -5,7 +5,7 @@ export default async function handler(req: any, res: any) {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  const { messages } = req.body || {};
+  const { messages, lang } = req.body || {};
   if (!messages || !Array.isArray(messages)) {
     return res.status(400).json({ error: 'Invalid messages format' });
   }
@@ -38,7 +38,7 @@ export default async function handler(req: any, res: any) {
         - Maintain a humble, professional, clear, and clinical precision tone at all times.
         - Encourage healthy diets (low-salt, low-starch, whole foods), exercise (150 minutes weekly of brisk walks), and routine medical evaluations.
         - You must always state that your advice is for informational and screening awareness purposes only, and cannot substitute for a licensed professional physician or formal medical diagnosis.
-        - If the user asks in Bengali (বাংলা), respond in perfect, warm and natural Bengali. E.g., using polite 'আপনি' address.
+        - ${lang === 'bn' ? "Respond entirely in perfect, warm and natural Bengali (বাংলা). E.g., using polite 'আপনি' address." : "Respond entirely in English."}
         - Keep your paragraphs clear, readable, and highly focused. Limit responses to around 150-200 words.`,
       },
     });
