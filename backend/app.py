@@ -112,6 +112,7 @@ def _init_db_on_startup():
 
 class PatientData(BaseModel):
     user_id: Optional[str] = "anonymous"
+    save_history: bool = True
     age: int = 35
     systolic_bp: float = 120.0
     diastolic_bp: float = 80.0
@@ -154,6 +155,7 @@ async def model_info():
 async def assess(patient: PatientData):
     try:
         patient_dict = patient.dict()
+        save_history = bool(patient_dict.pop("save_history", True))
         
         if patient_dict.get("age", 0) <= 0:
             raise HTTPException(status_code=400, detail="Invalid age")
@@ -214,13 +216,16 @@ async def assess(patient: PatientData):
         )
 
         # STEP 5: Personalization
-        print("👤 Updating user profile...")
-        personalization.update_profile(
-            user_id, patient_dict, risk_scores
-        )
-        personal_message = personalization.get_personalized_message(
-            user_id, lang
-        )
+        # Bootstrap previews should stay transient; only explicit assessments persist.
+        personal_message = {"message": ""}
+        if save_history:
+            print("👤 Updating user profile...")
+            personalization.update_profile(
+                user_id, patient_dict, risk_scores
+            )
+            personal_message = personalization.get_personalized_message(
+                user_id, lang
+            )
 
         # Select dominant disease details for backward compatibility with frontend
         dominant_key = max(risk_scores, key=lambda k: risk_scores[k]["probability"])
@@ -247,7 +252,7 @@ async def assess(patient: PatientData):
             primary_recommendation = dominant_data.get("recommendation", "")
 
         # Save to assessment history if user is authenticated
-        if user_id and str(user_id).lower() != "anonymous":
+        if save_history and user_id and str(user_id).lower() != "anonymous":
             try:
                 actual_uid = int(user_id)
             except ValueError:

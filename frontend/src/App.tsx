@@ -257,62 +257,6 @@ export default function App() {
     }
   }, [theme]);
 
-  // Initial risk computation local baseline on mount
-  useEffect(() => {
-    const fetchInitialRisk = async () => {
-      if (activeEmail && usersDb[activeEmail]?.riskResults) {
-        setRiskResults(usersDb[activeEmail].riskResults);
-        return;
-      }
-      try {
-        const heightInMeters = (DEFAULT_ASSESSMENT.height || 175) / 100;
-        const bmiVal = parseFloat(((DEFAULT_ASSESSMENT.weight || 70) / (heightInMeters * heightInMeters)).toFixed(1));
-        const hasFamilyHistory = DEFAULT_ASSESSMENT.familyHistory.diabetes || DEFAULT_ASSESSMENT.familyHistory.hypertension || DEFAULT_ASSESSMENT.familyHistory.stroke || DEFAULT_ASSESSMENT.familyHistory.heartDisease;
-        
-        const payload = {
-          // FIX: use activeUsername for backend user_id
-          user_id: activeUsername || activeEmail || "anonymous",
-          age: DEFAULT_ASSESSMENT.age,
-          systolic_bp: DEFAULT_ASSESSMENT.systolic,
-          diastolic_bp: DEFAULT_ASSESSMENT.diastolic,
-          bmi: bmiVal,
-          family_history: hasFamilyHistory,
-          activity_level: DEFAULT_ASSESSMENT.activityLevel,
-          diet_quality: DEFAULT_ASSESSMENT.dietQuality,
-          salt_intake: DEFAULT_ASSESSMENT.saltIntake,
-          stress_level: DEFAULT_ASSESSMENT.stressLevel,
-          smoking: DEFAULT_ASSESSMENT.smoking,
-          dietary_diversity: 5.0,
-          income_level: "medium",
-          children_under5: 0,
-          lang: lang === "EN" ? "en" : "bn"
-        };
-        
-        const response = await fetch("/api/assess", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-        if (response.ok) {
-          const results = await response.json();
-          const frontendResults = {
-            ...results,
-            hypertensionRisk: Math.max(results.condition_scores?.Hypertension || 0, results.condition_scores?.['Heart Disease'] || 0) || results.hypertensionRisk || 0,
-            diabetesRisk: results.condition_scores?.Diabetes ?? results.diabetesRisk ?? 0,
-            overallRisk: results.risk_score ?? results.overallRisk ?? 0,
-            overallRiskLabel: results.risk_level ?? results.overallRiskLabel ?? "Medium",
-            findings: results.risk_results ? Object.keys(results.risk_results).filter(k => k !== 'heart_disease').map(k => `${k}: ${results.risk_results[k].explanation}`) : results.findings ?? [],
-            recommendations: results.recommendation ? [results.recommendation] : results.recommendations || []
-          };
-          setRiskResults(frontendResults);
-        }
-      } catch (err) {
-        console.warn("Could not pre-fetch clinical assessment values, using initial layout indicators.");
-      }
-    };
-    fetchInitialRisk();
-  }, [activeEmail, activeUsername]);
-
   // Form submission handler
   const handleAssessmentSubmit = async () => {
     setIsSubmitting(true);
@@ -324,6 +268,8 @@ export default function App() {
       const payload = {
         // FIX: use activeUsername for backend user_id so history saves correctly
         user_id: activeUsername || activeEmail || "anonymous",
+        // Explicit user action, so this one should be persisted.
+        save_history: true,
         age: assessmentData.age,
         systolic_bp: assessmentData.systolic,
         diastolic_bp: assessmentData.diastolic,
