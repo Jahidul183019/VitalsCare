@@ -20,6 +20,8 @@ warnings.filterwarnings("ignore")
 _BASE_DIR = os.path.dirname(__file__)
 _DATASETS_DIR = os.path.join(_BASE_DIR, "datasets")
 _MODELS_DIR = os.path.join(_DATASETS_DIR, "trained_models")
+_MODEL_SCHEMA_VERSION = "2026-06-12-v3"
+_CACHE_VERSION_FILE = os.path.join(_MODELS_DIR, ".schema_version")
 
 os.makedirs(_MODELS_DIR, exist_ok=True)
 
@@ -58,6 +60,25 @@ def _try_import_joblib():
         return joblib
     except ImportError:
         return None
+
+
+def _read_cached_schema_version() -> str | None:
+    try:
+        if not os.path.isfile(_CACHE_VERSION_FILE):
+            return None
+        with open(_CACHE_VERSION_FILE, "r", encoding="utf-8") as handle:
+            version = handle.read().strip()
+        return version or None
+    except Exception:
+        return None
+
+
+def _write_cached_schema_version() -> None:
+    try:
+        with open(_CACHE_VERSION_FILE, "w", encoding="utf-8") as handle:
+            handle.write(_MODEL_SCHEMA_VERSION)
+    except Exception as exc:
+        print(f"[ml_models] ⚠️  Could not write cache schema version: {exc}")
 
 
 def _smart_sample(X, y, max_samples=20000):
@@ -548,6 +569,8 @@ def train_models() -> None:
     global _models, _model_info
 
     joblib = _try_import_joblib()
+    cached_schema_version = _read_cached_schema_version()
+    cache_is_current = cached_schema_version == _MODEL_SCHEMA_VERSION
 
     try:
         from sklearn.model_selection import train_test_split
@@ -558,11 +581,17 @@ def train_models() -> None:
 
     datasets = load_datasets()
 
+    if not cache_is_current:
+        print(
+            "[ml_models] 🔄 Model cache schema changed "
+            f"({cached_schema_version!r} -> {_MODEL_SCHEMA_VERSION}); retraining all models."
+        )
+
     for disease, (X, y, source) in datasets.items():
         model_path = os.path.join(_MODELS_DIR, f"{disease}.joblib")
 
         # Load from disk cache if available
-        if joblib is not None and os.path.isfile(model_path):
+        if cache_is_current and joblib is not None and os.path.isfile(model_path):
             try:
                 model = joblib.load(model_path)
                 _models[disease] = model
@@ -626,6 +655,9 @@ def train_models() -> None:
         except Exception as exc:
             print(f"[ml_models] ❌ Training failed for {disease}: {exc}")
 
+    if _models:
+        _write_cached_schema_version()
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # init_models() — backward-compatible entry point
@@ -656,15 +688,16 @@ def _build_diabetes_features(p: dict, activity_int: int, smoking_int: int) -> np
     diet_int = {"poor": 0, "average": 1, "good": 2}.get(
         str(p.get("diet_quality", "average")).lower(), 1
     )
+    family_history = 1 if p.get("family_history") else 0
 
-    # Approximate HbA1c from BMI + age + diet
-    # Higher BMI, older age, poor diet → higher HbA1c
-    hba1c_approx = 4.5 + (bmi - 18.5) * 0.08 + (age - 20) * 0.02 + (2 - diet_int) * 0.4
+    # Approximate HbA1c from BMI + age + diet + activity + family history
+    # Scaled up to realistically breach the model's >=6.5 threshold for high-risk profiles
+    hba1c_approx = 5.0 + max(0, bmi - 22) * 0.15 + max(0, age - 30) * 0.04 + (2 - diet_int) * 0.7 + (2 - activity_int) * 0.2 + (family_history * 0.8)
     hba1c_approx = float(np.clip(hba1c_approx, 3.5, 14.0))
 
-    # Approximate blood_glucose from diet + activity
-    # Poor diet, low activity → higher glucose
-    blood_glucose_approx = 90 + (2 - diet_int) * 30 + (2 - activity_int) * 25
+    # Approximate blood_glucose from diet + activity + bmi + age + family history
+    # Scaled up so poor profiles can exceed the >200mg/dL diabetic model splits
+    blood_glucose_approx = 100 + (2 - diet_int) * 50 + (2 - activity_int) * 30 + max(0, bmi - 25) * 3.0 + max(0, age - 35) * 2.0 + (family_history * 25.0)
     blood_glucose_approx = float(np.clip(blood_glucose_approx, 70, 350))
 
     systolic_bp = float(p.get("systolic_bp", 120))
@@ -713,9 +746,13 @@ def _build_cvd_features(p: dict, activity_int: int, smoking_int: int) -> np.ndar
     # Exercise angina: low activity + high stress → more likely
     exercise_angina = 1 if (activity_int == 0 and stress_int == 2) else 0
 
+    # Match the training feature engineering: the final feature is derived from
+    # MaxHR, not the raw user activity label.
+    activity_level_int = 2 if max_hr_approx > 150 else (1 if max_hr_approx > 100 else 0)
+
     return np.array([[
         age, systolic_bp, cholesterol_approx, fasting_bs,
-        max_hr_approx, exercise_angina, oldpeak_approx, activity_int
+        max_hr_approx, exercise_angina, oldpeak_approx, activity_level_int
     ]])
 
 
@@ -1036,47 +1073,9 @@ def get_model_info() -> Dict[str, Any]:
           "models": {
             "diabetes":     { "source": "real"/"synthetic", "accuracy": float,
                               "n_samples": int, "url": str, "cached": bool },
-            "cvd":          { ... },
-            "hypertension": { ... },
-            "malnutrition": { ... }
-          },
-          "summary": {
-            "total_models": int,
-            "real_datasets": int,
-            "synthetic_datasets": int
           }
         }
     """
-    if not _models:
+    if not _model_info:
         init_models()
-
-    real_count = sum(1 for v in _model_info.values() if v.get("source") == "real")
-    synthetic_count = len(_model_info) - real_count
-
-    return {
-        "models": _model_info,
-        "summary": {
-            "total_models": len(_model_info),
-            "real_datasets": real_count,
-            "synthetic_datasets": synthetic_count,
-        }
-    }
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Auto-train on import (backward-compatible)
-# ─────────────────────────────────────────────────────────────────────────────
-init_models()
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# ADD TO app.py (copy-paste snippet):
-# ─────────────────────────────────────────────────────────────────────────────
-#
-# from ml_models import predict_risks, get_model_info
-#
-# @app.get("/model/info")
-# async def model_info():
-#     return get_model_info()
-#
-# ─────────────────────────────────────────────────────────────────────────────
+    return {"models": _model_info}
