@@ -47,6 +47,102 @@ const DEFAULT_ASSESSMENT: AssessmentData = {
   alcohol: "never",
 };
 
+const toRiskNumber = (value: unknown, fallback = 0): number => {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+
+  if (typeof value === "string" && value.trim() !== "") {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) {
+      return parsed;
+    }
+  }
+
+  return fallback;
+};
+
+const labelFromRisk = (value: number): "Low" | "Medium" | "High" => {
+  if (value < 35) return "Low";
+  if (value < 70) return "Medium";
+  return "High";
+};
+
+const buildFrontendRiskResults = (source: any) => {
+  const preciseScores = source?.risk_results ?? source?.risk_scores ?? null;
+  const hasPreciseScores =
+    !!preciseScores && typeof preciseScores === "object" && Object.keys(preciseScores).length > 0;
+
+  const hypertensionRisk = hasPreciseScores
+    ? toRiskNumber(
+        preciseScores?.hypertension?.probability ??
+        preciseScores?.heart_disease?.probability ??
+        preciseScores?.cvd?.probability ??
+        0
+      )
+    : toRiskNumber(source?.condition_scores?.Hypertension ?? source?.hypertensionRisk ?? 0);
+
+  const diabetesRisk = hasPreciseScores
+    ? toRiskNumber(preciseScores?.diabetes?.probability ?? 0)
+    : toRiskNumber(source?.condition_scores?.Diabetes ?? source?.diabetesRisk ?? 0);
+
+  const heartRisk = hasPreciseScores
+    ? toRiskNumber(
+        preciseScores?.heart_disease?.probability ??
+        preciseScores?.cvd?.probability ??
+        0
+      )
+    : toRiskNumber(source?.condition_scores?.["Heart Disease"] ?? 0);
+
+  const malnutritionRisk = hasPreciseScores
+    ? toRiskNumber(preciseScores?.malnutrition?.probability ?? 0)
+    : toRiskNumber(source?.condition_scores?.Malnutrition ?? 0);
+
+  const overallRiskFromPrecise = Math.max(hypertensionRisk, diabetesRisk, heartRisk, malnutritionRisk);
+  const overallRisk = hasPreciseScores
+    ? overallRiskFromPrecise
+    : toRiskNumber(source?.risk_score ?? source?.overallRisk ?? overallRiskFromPrecise);
+
+  const overallRiskLabel = source?.risk_level ?? source?.overallRiskLabel ?? labelFromRisk(overallRisk);
+  const findings = source?.risk_results
+    ? Object.keys(source.risk_results)
+        .filter((k) => k !== "heart_disease")
+        .map((k) => {
+          const entry = source.risk_results[k];
+          if (!entry) return `${k}: risk details unavailable`;
+          if (entry.explanation) return `${k}: ${entry.explanation}`;
+          if (Array.isArray(entry.top_factors) && entry.top_factors.length > 0) {
+            return `${k}: ${entry.top_factors[0]}`;
+          }
+          if (Array.isArray(entry.contributing_factors) && entry.contributing_factors.length > 0) {
+            return `${k}: ${entry.contributing_factors[0]?.reason ?? "risk factors recorded"}`;
+          }
+          return `${k}: ${entry.risk_level ? `${entry.risk_level} risk` : "risk factors recorded"}`;
+        })
+    : source?.findings ?? [];
+  const recommendations = source?.recommendation
+    ? [source.recommendation]
+    : source?.recommendations || (hasPreciseScores
+      ? [
+          preciseScores?.hypertension?.recommendation,
+          preciseScores?.diabetes?.recommendation,
+          preciseScores?.heart_disease?.recommendation,
+          preciseScores?.cvd?.recommendation,
+          preciseScores?.malnutrition?.recommendation,
+        ].filter(Boolean)
+      : []);
+
+  return {
+    ...source,
+    hypertensionRisk,
+    diabetesRisk,
+    overallRisk,
+    overallRiskLabel,
+    findings,
+    recommendations,
+  };
+};
+
 export default function App() {
   const [view, setView] = useState<ViewType>("landing");
   const [lang, setLang] = useState<"EN" | "BN">("EN");
@@ -140,30 +236,72 @@ export default function App() {
       
       const data = await response.json();
 
+      let hydratedRiskResults: any = null;
+      let hydratedAssessmentHistory: any[] | null = null;
+
+      try {
+        const historyResponse = await fetch("/api/auth/me/history", {
+          headers: { token: data.token },
+        });
+
+        if (historyResponse.ok) {
+          const historyData = await historyResponse.json();
+          const historyRecords = Array.isArray(historyData.history) ? historyData.history : [];
+
+          if (historyRecords.length > 0) {
+            hydratedRiskResults = buildFrontendRiskResults({
+              risk_results: historyRecords[0]?.risk_scores ?? {},
+            });
+
+            hydratedAssessmentHistory = historyRecords.map((record: any) => {
+              const snapshot = buildFrontendRiskResults({
+                risk_results: record?.risk_scores ?? {},
+              });
+              const when = record?.created_at ? new Date(record.created_at * 1000) : new Date();
+              return {
+                date: when.toLocaleDateString(lang === "EN" ? "en-US" : "bn-BD", {
+                  month: "short",
+                  day: "numeric",
+                }),
+                hypertensionRisk: snapshot.hypertensionRisk,
+                diabetesRisk: snapshot.diabetesRisk,
+                overallRisk: snapshot.overallRisk,
+                systolic: record?.patient_data?.systolic_bp ?? DEFAULT_ASSESSMENT.systolic,
+                diastolic: record?.patient_data?.diastolic_bp ?? DEFAULT_ASSESSMENT.diastolic,
+                weight: record?.patient_data?.weight ?? DEFAULT_ASSESSMENT.weight,
+              };
+            });
+          }
+        }
+      } catch (historyErr) {
+        // Ignore hydration failures and fall back to the local cache.
+      }
+
       // Store token + username + email in localStorage
       localStorage.setItem("vitalcare_auth_token", data.token);
       localStorage.setItem("vitalcare_username", data.username);
       localStorage.setItem("vitalcare_email", formattedEmail);
 
+      // Ensure local user DB has an entry for state syncing
+      const existingUser = usersDb[formattedEmail];
+      const mergedRiskResults = hydratedRiskResults ?? existingUser?.riskResults ?? null;
+      const newDb = {
+        ...usersDb,
+        [formattedEmail]: {
+          displayName: data.name || existingUser?.displayName || formattedEmail.split("@")[0],
+          password: pass,
+          assessmentData: existingUser?.assessmentData || DEFAULT_ASSESSMENT,
+          assessmentHistory: hydratedAssessmentHistory ?? existingUser?.assessmentHistory ?? [],
+          riskResults: mergedRiskResults,
+        },
+      };
+      setUsersDb(newDb);
+      localStorage.setItem("vitalcare_accounts", JSON.stringify(newDb));
+
       // FIX: store username for user_id in assessments
       setActiveUsername(data.username);
       setActiveEmail(formattedEmail);
-      
-      // Ensure local user DB has an entry for state syncing
-      if (!usersDb[formattedEmail]) {
-        const newDb = {
-          ...usersDb,
-          [formattedEmail]: {
-            displayName: data.name || formattedEmail.split("@")[0],
-            password: pass,
-            assessmentData: DEFAULT_ASSESSMENT,
-            assessmentHistory: [],
-            riskResults: null
-          }
-        };
-        setUsersDb(newDb);
-        localStorage.setItem("vitalcare_accounts", JSON.stringify(newDb));
-      }
+      setRiskResults(mergedRiskResults);
       
       return true;
     } catch (err) {
@@ -298,15 +436,7 @@ export default function App() {
 
       const results = await response.json();
       
-      const frontendResults = {
-        ...results,
-        hypertensionRisk: Math.max(results.condition_scores?.Hypertension || 0, results.condition_scores?.['Heart Disease'] || 0) || results.hypertensionRisk || 0,
-        diabetesRisk: results.condition_scores?.Diabetes ?? results.diabetesRisk ?? 0,
-        overallRisk: results.risk_score ?? results.overallRisk ?? 0,
-        overallRiskLabel: results.risk_level ?? results.overallRiskLabel ?? "Medium",
-        findings: results.risk_results ? Object.keys(results.risk_results).filter(k => k !== 'heart_disease').map(k => `${k}: ${results.risk_results[k].explanation}`) : results.findings ?? [],
-        recommendations: results.recommendation ? [results.recommendation] : results.recommendations || []
-      };
+      const frontendResults = buildFrontendRiskResults(results);
 
       setRiskResults(frontendResults);
 

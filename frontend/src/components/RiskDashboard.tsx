@@ -72,6 +72,11 @@ export default function RiskDashboard({
   const completedCount = actions.filter(a => a.completed).length;
   const progressPercent = Math.round((completedCount / actions.length) * 100);
 
+  const formatRiskPercent = (value: number) => {
+    if (!Number.isFinite(value)) return "0";
+    return value.toFixed(2).replace(/\.?0+$/, "");
+  };
+
   // ── OpenStreetMap / Overpass API Integration ──────────────────────────────
   // Haversine formula to compute distance in km between two lat/lng pairs
   const haversine = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
@@ -505,10 +510,10 @@ out center 40;`;
               </h1>
               <span className="w-2.5 h-2.5 rounded-full bg-secondary animate-pulse shrink-0"></span>
             </div>
-            <p className="text-xs md:text-sm text-on-surface-variant leading-relaxed mt-1">
+              <p className="text-xs md:text-sm text-on-surface-variant leading-relaxed mt-1">
               {lang === "EN"
-                ? <>Your calculated NCD risk level is currently <span className="text-secondary font-bold font-mono">{(overallProb).toFixed(0)}%</span>. You have pending lifestyle actions.</>
-                : <>আপনার নির্ণীত স্বাস্থ্যঝুঁকি সূচক বর্তমানে <span className="text-secondary font-bold font-mono">{(overallProb).toFixed(0)}%</span>। স্বাস্থ্য প্রগতি বজায় রাখতে নির্দেশিত পরিকল্পনা মেনে চলুন।</>
+                ? <>Your calculated NCD risk level is currently <span className="text-secondary font-bold font-mono">{formatRiskPercent(overallProb)}%</span>. You have pending lifestyle actions.</>
+                : <>আপনার নির্ণীত স্বাস্থ্যঝুঁকি সূচক বর্তমানে <span className="text-secondary font-bold font-mono">{formatRiskPercent(overallProb)}%</span>। স্বাস্থ্য প্রগতি বজায় রাখতে নির্দেশিত পরিকল্পনা মেনে চলুন।</>
               }
             </p>
             {riskResults?.personalization?.message && (
@@ -703,13 +708,13 @@ out center 40;`;
                 <div className="flex justify-between items-center text-xs">
                   <span className="text-on-surface font-semibold">{lang === "EN" ? "HTN Risk Level" : "উচ্চ রক্তচাপ ঝুঁকি সূচক"}</span>
                   <span className="font-mono font-extrabold text-red-500 bg-red-500/10 px-2 py-0.5 rounded">
-                    {activePoint?.hypertensionRisk}%
+                    {formatRiskPercent(activePoint?.hypertensionRisk ?? 0)}%
                   </span>
                 </div>
                 <div className="flex justify-between items-center text-xs">
                   <span className="text-on-surface font-semibold">{lang === "EN" ? "Diabetic Risk Level" : "ডায়াবেটিস ঝুঁকি সূচক"}</span>
                   <span className="font-mono font-extrabold text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded">
-                    {activePoint?.diabetesRisk}%
+                    {formatRiskPercent(activePoint?.diabetesRisk ?? 0)}%
                   </span>
                 </div>
               </div>
@@ -721,14 +726,14 @@ out center 40;`;
                     <>
                       {sysChange < 0 ? `✓ Systolic BP reduced by ${Math.abs(sysChange)} mmHg ` : ""}
                       {wtChange < 0 ? `✓ Weight reduced by ${Math.abs(wtChange)} kg ` : ""}
-                      {riskChange < 0 ? `✓ Overall diagnostic risk dropped by ${Math.abs(riskChange)}% ` : ""}
+                      {riskChange < 0 ? `✓ Overall diagnostic risk dropped by ${formatRiskPercent(Math.abs(riskChange))}% ` : ""}
                       since baseline levels.
                     </>
                   ) : (
                     <>
                       {sysChange < 0 ? `✓ পূর্বের তুলনায় সিস্টোলিক রক্তচাপ ${Math.abs(sysChange)} mmHg কমেছে ` : ""}
                       {wtChange < 0 ? `✓ শারীরিক ওজন ${Math.abs(wtChange)} কেজি হ্রাস পেয়েছে ` : ""}
-                      {riskChange < 0 ? `✓ সামগ্রিক শারীরিক ঝুঁকি ${Math.abs(riskChange)}% উন্নীত হয়েছে ` : ""}।
+                      {riskChange < 0 ? `✓ সামগ্রিক শারীরিক ঝুঁকি ${formatRiskPercent(Math.abs(riskChange))}% উন্নীত হয়েছে ` : ""}।
                     </>
                   )}
                 </div>

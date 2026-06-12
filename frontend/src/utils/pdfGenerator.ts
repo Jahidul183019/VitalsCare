@@ -28,6 +28,11 @@ export function downloadPDFReport(
   // Helper top margin tracker
   let currentY = 12;
 
+  const formatRiskPercent = (value: number) => {
+    if (!Number.isFinite(value)) return "0";
+    return value.toFixed(2).replace(/\.?0+$/, "");
+  };
+
   // DRAW HEADER BANNER / BACKGROUND
   doc.setFillColor(darkSlateColor[0], darkSlateColor[1], darkSlateColor[2]);
   doc.rect(0, 0, pageWidth, 35, "F");
@@ -214,7 +219,7 @@ export function downloadPDFReport(
     doc.setTextColor(darkSlateColor[0], darkSlateColor[1], darkSlateColor[2]);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(8);
-    doc.text(`${risk.name}:  ${risk.score}%`, 13, currentY);
+    doc.text(`${risk.name}:  ${formatRiskPercent(risk.score)}%`, 13, currentY);
 
     // Bar background
     doc.setFillColor(226, 232, 240);

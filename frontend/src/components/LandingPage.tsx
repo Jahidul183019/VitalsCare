@@ -93,6 +93,7 @@ export default function LandingPage({
       quote2: "As a practitioner, having patients arrive with these risk data points makes our consultations 10x more efficient and data-driven.",
       user2: "Dr. Sarah Pervez",
       user2Desc: "Cardiologist",
+      trusted: "Trusted by clinicians",
     },
     BN: {
       tag: "এআই-চালিত প্রতিরোধমূলক যত্ন",
@@ -139,6 +140,7 @@ export default function LandingPage({
       quote2: "একজন কার্ডিওলজিস্ট হিসেবে রোগীদের এই গুরুত্বপূর্ণ চার্ট এবং ঝুঁকি ডাটা হাতে নিয়ে আসতে দেখলে আমার রোগ নির্ণয় ১০ গুণ সহজ ও ডাটা-চালিত হয়ে যায়।",
       user2: "ডা. সারাহ পারভেজ",
       user2Desc: "হৃদরোগ বিশেষজ্ঞ",
+      trusted: "চিকিৎসকদের আস্থা অর্জন করেছে",
     }
   };
 

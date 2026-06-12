@@ -286,15 +286,15 @@ async def assess(patient: PatientData):
                 "step5": "Personalization"
             },
             # Compatibility fields for frontend
-            "risk_score": int(round(dominant_data["probability"])),
+            "risk_score": round(float(dominant_data["probability"]), 2),
             "risk_level": level_map.get(dominant_data["risk_level"], "Low"),
             "color_code": color_map.get(dominant_data["color"], "Green"),
             "dominant_condition": disease_display_names.get(dominant_key, "Hypertension"),
             "condition_scores": {
-                "Hypertension": int(round(risk_scores.get("hypertension", {}).get("probability", 0))),
-                "Diabetes": int(round(risk_scores.get("diabetes", {}).get("probability", 0))),
-                "Malnutrition": int(round(risk_scores.get("malnutrition", {}).get("probability", 0))),
-                "Heart Disease": int(round(risk_scores.get("heart_disease", {}).get("probability", 0)))
+                "Hypertension": round(float(risk_scores.get("hypertension", {}).get("probability", 0)), 2),
+                "Diabetes": round(float(risk_scores.get("diabetes", {}).get("probability", 0)), 2),
+                "Malnutrition": round(float(risk_scores.get("malnutrition", {}).get("probability", 0)), 2),
+                "Heart Disease": round(float(risk_scores.get("heart_disease", {}).get("probability", 0)), 2)
             },
             "recommendation": primary_recommendation
         }
