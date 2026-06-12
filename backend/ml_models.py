@@ -644,6 +644,12 @@ def _build_diabetes_features(p: dict, activity_int: int, smoking_int: int) -> np
     Build 8-feature vector matching diabetes_prediction_dataset schema:
     [age, bmi, HbA1c_approx, blood_glucose_approx,
      hypertension_from_bp, heart_disease=0, smoking_int, activity_level_int]
+
+    FIX: activity_level_int must be derived from blood_glucose_approx using the
+    same logic as _load_diabetes_dataset() and _synthetic_diabetes():
+        >200 → 0 (low activity proxy), >140 → 1 (medium), else → 2 (high)
+    Previously this passed `activity_int` (mapped from the "low/medium/high" string),
+    which is a completely different encoding and caused the model to always output ~0.
     """
     age = float(p.get("age", 40))
     bmi = float(p.get("bmi", 23.0))
@@ -664,9 +670,14 @@ def _build_diabetes_features(p: dict, activity_int: int, smoking_int: int) -> np
     systolic_bp = float(p.get("systolic_bp", 120))
     hypertension_from_bp = 1 if systolic_bp >= 140 else 0
 
+    # FIX: derive activity_level_int from blood_glucose_approx,
+    # matching _load_diabetes_dataset() and _synthetic_diabetes() exactly:
+    #   blood_glucose > 200 → 0 (low), > 140 → 1 (medium), else → 2 (high)
+    activity_level_int = 0 if blood_glucose_approx > 200 else (1 if blood_glucose_approx > 140 else 2)
+
     return np.array([[
         age, bmi, hba1c_approx, blood_glucose_approx,
-        hypertension_from_bp, 0, smoking_int, activity_int
+        hypertension_from_bp, 0, smoking_int, activity_level_int
     ]])
 
 
